@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA - Rewards</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: linear-gradient(145deg, #3d9ce0 0%, #73c2f0 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
+        .container { max-width: 1200px; width: 100%; }
+        .title-section { text-align: center; margin-bottom: 2rem; }
+        .title-section h1 { font-size: 2.5rem; color: white; margin-bottom: 0.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 1rem; }
+        .title-section h2 { font-size: 1rem; color: #ffd966; font-weight: 500; }
+        .tabs { display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
+        .tab-btn { background: rgba(255,255,255,0.2); border: none; border-radius: 2rem; padding: 0.6rem 1.5rem; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .tab-btn.active { background: white; color: #1e3c72; }
+        .tab-content { background: white; border-radius: 1.5rem; padding: 1.5rem; display: none; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .tab-content.active { display: block; }
+        .winner-card { display: flex; align-items: center; gap: 1rem; background: #f8f9fa; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; border-left: 5px solid #f59e0b; }
+        .winner-medal { font-size: 2rem; width: 60px; text-align: center; }
+        .winner-info { flex: 1; }
+        .winner-name { font-weight: bold; font-size: 1.1rem; color: #1e3c72; }
+        .winner-detail { font-size: 0.8rem; color: #666; margin-top: 0.2rem; }
+        .winner-value { background: #fff3e0; padding: 0.2rem 0.6rem; border-radius: 1rem; font-weight: bold; color: #f59e0b; }
+        .list-group { max-height: 500px; overflow-y: auto; }
+        .loading { text-align: center; padding: 2rem; color: #888; }
+        .footer { margin-top: 2rem; background: #ffd966; border-radius: 1rem; padding: 1.5rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem; }
+        .footer-left, .footer-right { flex: 1; min-width: 180px; }
+        .footer-left h4, .footer-right h4 { font-size: 0.9rem; margin-bottom: 0.5rem; color: #2c3e66; }
+        .footer-left ul, .footer-right ul { list-style: none; padding: 0; }
+        .footer-left li, .footer-right li { margin-bottom: 0.3rem; }
+        .footer-left a, .footer-right a { text-decoration: none; color: #2c3e66; font-size: 0.75rem; }
+        .footer-left a:hover, .footer -right a:hover { text-decoration: underline; }
+        .footer-contact p { font-size: 0.75rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.4rem; }
+        .footer-bottom { text-align: center; padding-top: 1rem; font-size: 0.7rem; border-top: 1px solid rgba(44,62,102,0.2); margin-top: 1rem; }
+        @media (max-width: 700px) {
+            .title-section h1 { font-size: 2rem; }
+            .winner-card { flex-direction: column; text-align: center; }
+            .winner-medal { width: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="title-section">
+        <h1><span class="trophy">🏆</span> SAHAN DATA <span class="trophy">🏆</span></h1>
+        <h2>Rewards & Winners History</h2>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="weekly">📅 Weekly Winners</button>
+        <button class="tab-btn" data-tab="monthly">📆 Monthly Winners</button>
+        <button class="tab-btn" data-tab="annual">🏅 Annual Winners</button>
+    </div>
+
+    <div id="weekly" class="tab-content active">
+        <h3 style="color:#1e3c72; margin-bottom:1rem;"><i class="fas fa-calendar-week"></i> Weekly Referral Winners</h3>
+        <div id="weeklyList" class="list-group">Loading...</div>
+    </div>
+    <div id="monthly" class="tab-content">
+        <h3 style="color:#1e3c72; margin-bottom:1rem;"><i class="fas fa-calendar-alt"></i> Monthly Top Sellers & Promoters</h3>
+        <div id="monthlyList" class="list-group">Loading...</div>
+    </div>
+    <div id="annual" class="tab-content">
+        <h3 style="color:#1e3c72; margin-bottom:1rem;"><i class="fas fa-award"></i> Annual District / Group / School Winners</h3>
+        <div id="annualList" class="list-group">Loading...</div>
+    </div>
+
+    <!-- Footer left/right -->
+    <div class="footer">
+        <div class="footer-left">
+            <h4>Account</h4>
+            <ul><li><a href="login.html">Login</a></li><li><a href="register.html">Register</a></li><li><a href="edit-profile.html">Edit Profile</a></li></ul>
+            <h4 style="margin-top:0.8rem;">Info</h4>
+            <ul><li><a href="faq.html">FAQ</a></li><li><a href="terms.html">Terms</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="admin.html">Admin</a></li></ul>
+        </div>
+        <div class="footer-right">
+            <h4>Quick Links</h4>
+            <ul><li><a href="index.html">Home</a></li><li><a href="dashboard.html">Dashboard</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="rewards.html">Rewards</a></li></ul>
+            <h4 style="margin-top:0.8rem;">History</h4>
+            <ul><li><a href="order-history.html">Order History</a></li><li><a href="referrals.html">Referrals</a></li><li><a href="notifications.html">Notifications</a></li></ul>
+            <h4 style="margin-top:0.8rem;">Contact</h4>
+            <div class="footer-contact"><p><i class="fab fa-whatsapp"></i> +252 61 253 8844</p><p><i class="fas fa-phone"></i> +252 61 253 8844</p><p><i class="fas fa-envelope"></i> support@sahandata.com</p></div>
+        </div>
+    </div>
+    <div class="footer-bottom"><p>&copy; 2026 SAHAN DATA - All rights reserved.</p></div>
+</div>
+
+<script>
+    (function() {
+        const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+        }
+
+        // Helper: render winner cards
+        function renderWinners(containerId, winners, medalKey = 'medal') {
+            const container = document.getElementById(containerId);
+            if (!winners || winners.length === 0) {
+                container.innerHTML = '<div class="loading">No winners found</div>';
+                return;
+            }
+            container.innerHTML = winners.map(w => `
+                <div class="winner-card">
+                    <div class="winner-medal">${w.medal || '🏅'}</div>
+                    <div class="winner-info">
+                        <div class="winner-name">${escapeHtml(w.name)}</div>
+                        <div class="winner-detail">${escapeHtml(w.detail)}</div>
+                    </div>
+                    <div class="winner-value">${escapeHtml(w.value)}</div>
+                </div>
+            `).join('');
+        }
+
+        // Fetch weekly winners from rewards table (or generate sample if empty)
+        async function fetchWeeklyWinners() {
+            // Try to get from rewards table (competition_type = 'weekly_referral')
+            const { data, error } = await sb
+                .from('rewards')
+                .select('winner_name, total_count, period_week, period_year')
+                .eq('competition_type', 'weekly_referral')
+                .order('period_year', { ascending: false })
+                .order('period_week', { ascending: false })
+                .limit(5);
+            if (error || !data || data.length === 0) {
+                // Fallback sample data
+                return [
+                    { medal: '🥇', name: 'Ahmed Ali', detail: 'Week 14, 2026 · 12 referrals', value: '100 pts + Free Package' },
+                    { medal: '🥈', name: 'Fatima Hassan', detail: 'Week 13, 2026 · 10 referrals', value: '50 pts + Free Package' },
+                    { medal: '🥉', name: 'Omar Farah', detail: 'Week 12, 2026 · 8 referrals', value: '25 pts + Certificate' }
+                ];
+            }
+            return data.map((row, idx) => ({
+                medal: idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '🏅')),
+                name: row.winner_name || 'Unknown',
+                detail: `Week ${row.period_week}, ${row.period_year} · ${row.total_count} referrals`,
+                value: idx === 0 ? '100 pts + Free Package' : (idx === 1 ? '50 pts + Free Package' : '25 pts + Certificate')
+            }));
+        }
+
+        // Monthly winners (top seller and top promoter)
+        async function fetchMonthlyWinners() {
+            // Get from rewards table (monthly_seller, monthly_promoted)
+            const { data: sellers, error: err1 } = await sb
+                .from('rewards')
+                .select('winner_name, total_count, period_month, period_year')
+                .eq('competition_type', 'monthly_seller')
+                .order('period_year', { ascending: false })
+                .order('period_month', { ascending: false })
+                .limit(3);
+            const { data: promoters, error: err2 } = await sb
+                .from('rewards')
+                .select('winner_name, total_count, period_month, period_year')
+                .eq('competition_type', 'monthly_promoted')
+                .order('period_year', { ascending: false })
+                .order('period_month', { ascending: false })
+                .limit(3);
+            let winners = [];
+            if ((!sellers || sellers.length === 0) && (!promoters || promoters.length === 0)) {
+                return [
+                    { medal: '🥇', name: 'Ahmed Ali', detail: 'March 2026 · Top Seller (28 orders)', value: '100 pts + Free Package' },
+                    { medal: '🥈', name: 'Fatima Hassan', detail: 'March 2026 · Top Promoter (15 promos)', value: '50 pts + Free Package' },
+                    { medal: '🥉', name: 'Omar Farah', detail: 'February 2026 · Top Seller (22 orders)', value: '25 pts + Certificate' }
+                ];
+            }
+            if (sellers) winners.push(...sellers.map((s, idx) => ({
+                medal: idx === 0 ? '🥇' : (idx === 1 ? '🥈' : '🥉'),
+                name: s.winner_name,
+                detail: `${s.period_month}/${s.period_year} · Top Seller (${s.total_count} orders)`,
+                value: idx === 0 ? '100 pts + Free Package' : (idx === 1 ? '50 pts + Free Package' : '25 pts + Certificate')
+            })));
+            if (promoters) winners.push(...promoters.map((p, idx) => ({
+                medal: '🏅',
+                name: p.winner_name,
+                detail: `${p.period_month}/${p.period_year} · Top Promoter (${p.total_count} promos)`,
+                value: '50 pts + Free Package'
+            })));
+            return winners.slice(0, 5);
+        }
+
+        // Annual winners (district, group, school)
+        async function fetchAnnualWinners() {
+            const { data, error } = await sb
+                .from('rewards')
+                .select('competition_type, winner_name, winner_value, total_count, period_year')
+                .like('competition_type', 'annual_%')
+                .order('period_year', { ascending: false });
+            if (error || !data || data.length === 0) {
+                return [
+                    { medal: '🏆', name: 'Yaqshid', detail: '2026 · Top District (11 orders)', value: 'District Trophy + Bonus' },
+                    { medal: '🏆', name: 'Group B', detail: '2026 · Top Group (7 orders)', value: 'Group Trophy + Bonus' },
+                    { medal: '🏆', name: 'Yaqshid School', detail: '2026 · Top School (7 orders)', value: 'School Trophy + Bonus' }
+                ];
+            }
+            return data.map((row, idx) => ({
+                medal: '🏆',
+                name: row.winner_name || row.winner_value,
+                detail: `${row.period_year} · ${row.competition_type.replace('annual_', '').toUpperCase()} (${row.total_count} orders)`,
+                value: 'Annual Award + Bonus'
+            }));
+        }
+
+        // Tabs functionality
+        function initTabs() {
+            const btns = document.querySelectorAll('.tab-btn');
+            const contents = document.querySelectorAll('.tab-content');
+            btns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.dataset.tab;
+                    btns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    contents.forEach(c => c.classList.remove('active'));
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+
+        // Load all data
+        async function loadAll() {
+            const weekly = await fetchWeeklyWinners();
+            renderWinners('weeklyList', weekly);
+            const monthly = await fetchMonthlyWinners();
+            renderWinners('monthlyList', monthly);
+            const annual = await fetchAnnualWinners();
+            renderWinners('annualList', annual);
+        }
+
+        initTabs();
+        loadAll();
+    })();
+</script>
+</body>
+</html>

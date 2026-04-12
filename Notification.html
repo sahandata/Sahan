@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA - Notifications</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: linear-gradient(145deg, #3d9ce0 0%, #73c2f0 100%); min-height: 100vh; padding: 2rem 1rem; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 2.5rem; color: white; display: flex; align-items: center; justify-content: center; gap: 1rem; }
+        .header p { color: #ffd966; font-size: 1rem; }
+        .card { background: white; border-radius: 2rem; padding: 1.5rem; box-shadow: 0 20px 35px rgba(0,0,0,0.2); }
+        .notification-item { padding: 1rem; border-bottom: 1px solid #edf2f7; display: flex; gap: 1rem; align-items: center; }
+        .notification-icon { width: 40px; height: 40px; background: #ffd966; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .notification-content { flex: 1; }
+        .notification-title { font-weight: bold; color: #1e3c72; }
+        .notification-message { font-size: 0.85rem; color: #666; margin-top: 0.2rem; }
+        .notification-date { font-size: 0.7rem; color: #999; margin-top: 0.3rem; }
+        .loading { text-align: center; padding: 2rem; color: #888; }
+        .footer { margin-top: 2rem; background: #ffd966; border-radius: 1rem; padding: 1.5rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem; }
+        .footer-left, .footer-right { flex: 1; min-width: 180px; }
+        .footer-left h4, .footer-right h4 { font-size: 0.9rem; margin-bottom: 0.5rem; color: #2c3e66; }
+        .footer-left ul, .footer-right ul { list-style: none; padding: 0; }
+        .footer-left li, .footer-right li { margin-bottom: 0.3rem; }
+        .footer-left a, .footer-right a { text-decoration: none; color: #2c3e66; font-size: 0.75rem; }
+        .footer-contact p { font-size: 0.75rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.4rem; }
+        .footer-bottom { text-align: center; padding-top: 1rem; font-size: 0.7rem; border-top: 1px solid rgba(44,62,102,0.2); margin-top: 1rem; }
+        @media (max-width: 550px) {
+            .notification-item { flex-direction: column; text-align: center; }
+            .notification-icon { width: 50px; height: 50px; margin-bottom: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><span class="trophy">⭐</span> SAHAN DATA <span class="trophy">⭐</span></h1>
+        <p>Your Notifications</p>
+    </div>
+    <div class="card">
+        <div id="notificationsList"><div class="loading">Loading notifications...</div></div>
+    </div>
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-left"><h4>Account</h4><ul><li><a href="login.html">Login</a></li><li><a href="register.html">Register</a></li><li><a href="edit-profile.html">Edit Profile</a></li></ul>
+        <h4 style="margin-top:0.8rem;">Info</h4><ul><li><a href="faq.html">FAQ</a></li><li><a href="terms.html">Terms</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="admin.html">Admin</a></li></ul></div>
+        <div class="footer-right"><h4>Quick Links</h4><ul><li><a href="index.html">Home</a></li><li><a href="dashboard.html">Dashboard</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="rewards.html">Rewards</a></li></ul>
+        <h4 style="margin-top:0.8rem;">History</h4><ul><li><a href="order-history.html">Order History</a></li><li><a href="referrals.html">Referrals</a></li><li><a href="notifications.html">Notifications</a></li></ul>
+        <h4 style="margin-top:0.8rem;">Contact</h4><div class="footer-contact"><p><i class="fab fa-whatsapp"></i> +252 61 253 8844</p><p><i class="fas fa-phone"></i> +252 61 253 8844</p><p><i class="fas fa-envelope"></i> support@sahandata.com</p></div></div>
+    </div>
+    <div class="footer-bottom"><p>&copy; 2026 SAHAN DATA - All rights reserved.</p></div>
+</div>
+<script>
+    const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    async function loadNotifications() {
+        const { data: { user } } = await sb.auth.getUser();
+        if (!user) { window.location.href = 'login.html'; return; }
+        const { data: customer } = await sb.from('customers').select('id').eq('uid', user.id).single();
+        if (!customer) return;
+        // Sample notifications (you can replace with real data from a notifications table)
+        const { data: orders } = await sb.from('orders').select('order_number, created_at').eq('customer_id', customer.id).order('created_at', { ascending: false }).limit(3);
+        const { data: referrals } = await sb.from('customers').select('full_name, created_at').eq('referred_by', customer.id).order('created_at', { ascending: false }).limit(2);
+        let notifications = [];
+        if (orders && orders.length) notifications.push({ title: 'Recent Order', message: `You placed order #${orders[0].order_number}`, date: orders[0].created_at, icon: '🛒' });
+        if (referrals && referrals.length) notifications.push({ title: 'New Referral', message: `${referrals[0].full_name} joined using your link`, date: referrals[0].created_at, icon: '🔗' });
+        if (notifications.length === 0) notifications.push({ title: 'Welcome!', message: 'Start referring friends and placing orders to see notifications here.', date: new Date().toISOString(), icon: '🎉' });
+        const container = document.getElementById('notificationsList');
+        container.innerHTML = notifications.map(n => `
+            <div class="notification-item">
+                <div class="notification-icon"><i class="fas fa-bell"></i></div>
+                <div class="notification-content">
+                    <div class="notification-title">${escapeHtml(n.title)}</div>
+                    <div class="notification-message">${escapeHtml(n.message)}</div>
+                    <div class="notification-date">${new Date(n.date).toLocaleString()}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+    loadNotifications();
+</script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: linear-gradient(145deg, #3d9ce0 0%, #73c2f0 100%); min-height: 100vh; padding: 2rem 1rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 2.5rem; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 1rem; }
+        .header p { color: #ffd966; font-size: 1rem; }
+        /* Stats cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: white; border-radius: 1rem; padding: 1rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .stat-card h3 { font-size: 0.8rem; color: #f59e0b; margin-bottom: 0.3rem; }
+        .stat-card .value { font-size: 2rem; font-weight: bold; color: #1e3c72; }
+        /* Network sections */
+        .network-card { background: white; border-radius: 1.5rem; padding: 1.2rem; margin-bottom: 1.5rem; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+        .network-card h3 { color: #1e3c72; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .network-summary { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .summary-item { background: #f8f9fa; border-radius: 1rem; padding: 0.8rem; flex: 1; text-align: center; }
+        .summary-item .label { font-size: 0.7rem; color: #666; }
+        .summary-item .number { font-size: 1.3rem; font-weight: bold; color: #f59e0b; }
+        .network-table { width: 100%; border-collapse: collapse; }
+        .network-table th, .network-table td { padding: 0.6rem; text-align: left; border-bottom: 1px solid #edf2f7; }
+        .network-table th { background: #ffd966; color: #2c3e66; }
+        .loading { text-align: center; padding: 1rem; color: #888; }
+        /* Footer two columns */
+        .footer { margin-top: 2rem; background: #ffd966; border-radius: 1rem; padding: 1.5rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem; }
+        .footer-left, .footer-right { flex: 1; min-width: 180px; }
+        .footer-left h4, .footer-right h4 { font-size: 0.9rem; margin-bottom: 0.5rem; color: #2c3e66; }
+        .footer-left ul, .footer-right ul { list-style: none; padding: 0; }
+        .footer-left li, .footer-right li { margin-bottom: 0.3rem; }
+        .footer-left a, .footer-right a { text-decoration: none; color: #2c3e66; font-size: 0.75rem; }
+        .footer-left a:hover, .footer-right a:hover { text-decoration: underline; }
+        .footer-contact p { font-size: 0.75rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.4rem; }
+        .footer-bottom { text-align: center; padding-top: 1rem; font-size: 0.7rem; border-top: 1px solid rgba(44,62,102,0.2); margin-top: 1rem; }
+        @media (max-width: 700px) {
+            .header h1 { font-size: 1.8rem; gap: 0.5rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .footer { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><span class="trophy">⭐</span> SAHAN DATA <span class="trophy">⭐</span></h1>
+        <p>Your Personal Dashboard</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><h3>Total Referrals</h3><div class="value" id="totalReferrals">-</div></div>
+        <div class="stat-card"><h3>Bonus Points</h3><div class="value" id="bonusPoints">-</div></div>
+        <div class="stat-card"><h3>Promo Code</h3><div class="value" id="promoCode">-</div></div>
+        <div class="stat-card"><h3>Group Code</h3><div class="value" id="groupCode">-</div></div>
+    </div>
+
+    <!-- Network Summary -->
+    <div class="network-card">
+        <h3><i class="fas fa-network-wired"></i> My Network Summary</h3>
+        <div class="network-summary" id="networkSummary">
+            <div class="summary-item"><div class="label">Total Referred</div><div class="number" id="totalReferred">-</div></div>
+            <div class="summary-item"><div class="label">Network Orders Total</div><div class="number" id="networkOrdersTotal">$ -</div></div>
+        </div>
+    </div>
+
+    <!-- Network Orders Table -->
+    <div class="network-card">
+        <h3><i class="fas fa-list"></i> Referred Users & Their Orders</h3>
+        <table class="network-table" id="networkTable">
+            <thead><tr><th>Name</th><th>Order Count</th><th>Total Spent</th></tr></thead>
+            <tbody id="networkTableBody"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        </table>
+    </div>
+
+    <!-- Footer left/right -->
+    <div class="footer">
+        <div class="footer-left">
+            <h4>Account</h4>
+            <ul><li><a href="login.html">Login</a></li><li><a href="register.html">Register</a></li><li><a href="edit-profile.html">Edit Profile</a></li></ul>
+            <h4 style="margin-top:0.8rem;">Info</h4>
+            <ul><li><a href="faq.html">FAQ</a></li><li><a href="terms.html">Terms</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="admin.html">Admin</a></li></ul>
+        </div>
+        <div class="footer-right">
+            <h4>Quick Links</h4>
+            <ul><li><a href="index.html">Home</a></li><li><a href="dashboard.html">Dashboard</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="rewards.html">Rewards</a></li></ul>
+            <h4 style="margin-top:0.8rem;">History</h4>
+            <ul><li><a href="order-history.html">Order History</a></li><li><a href="referrals.html">Referrals</a></li><li><a href="notifications.html">Notifications</a></li></ul>
+            <h4 style="margin-top:0.8rem;">Contact</h4>
+            <div class="footer-contact"><p><i class="fab fa-whatsapp"></i> +252 61 253 8844</p><p><i class="fas fa-phone"></i> +252 61 253 8844</p><p><i class="fas fa-envelope"></i> support@sahandata.com</p></div>
+        </div>
+    </div>
+    <div class="footer-bottom"><p>&copy; 2026 SAHAN DATA - All rights reserved.</p></div>
+</div>
+
+<script>
+    (function() {
+        const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUserId = null;
+        let currentCustomerId = null;
+
+        async function getCurrentUser() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) {
+                window.location.href = 'login.html';
+                return null;
+            }
+            currentUserId = user.id;
+            // Get customer id from customers table
+            const { data: customer } = await sb.from('customers').select('id, promo_code, group_code, total_referrals, bonus_points').eq('uid', user.id).single();
+            if (customer) {
+                currentCustomerId = customer.id;
+                document.getElementById('promoCode').innerText = customer.promo_code || '-';
+                document.getElementById('groupCode').innerText = customer.group_code || '-';
+                document.getElementById('totalReferrals').innerText = customer.total_referrals || 0;
+                document.getElementById('bonusPoints').innerText = customer.bonus_points || 0;
+            }
+            return currentCustomerId;
+        }
+
+        async function loadNetworkSummary() {
+            if (!currentCustomerId) return;
+            const { data, error } = await sb.rpc('get_network_summary', { p_customer_id: currentCustomerId });
+            if (error) return;
+            if (data && data.length) {
+                document.getElementById('totalReferred').innerText = data[0].total_referred || 0;
+                document.getElementById('networkOrdersTotal').innerText = `$ ${(data[0].total_network_orders_amount || 0).toFixed(2)}`;
+            }
+        }
+
+        async function loadNetworkOrders() {
+            if (!currentCustomerId) return;
+            const { data, error } = await sb.rpc('get_network_orders', { p_customer_id: currentCustomerId });
+            const tbody = document.getElementById('networkTableBody');
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="loading">No referrals yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(row => `
+                <tr>
+                    <td>${escapeHtml(row.referred_name)}</td>
+                    <td>${row.order_count || 0}</td>
+                    <td>$${(row.total_amount || 0).toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+        }
+
+        async function init() {
+            const customerId = await getCurrentUser();
+            if (customerId) {
+                await loadNetworkSummary();
+                await loadNetworkOrders();
+            }
+        }
+
+        init();
+    })();
+</script>
+</body>
+</html>

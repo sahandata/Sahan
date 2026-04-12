@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA – Register | Advanced</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:radial-gradient(circle at 10% 30%, #0a0f1e, #03060c);font-family:'Segoe UI',sans-serif;padding:2rem 1.5rem;}
+        .container{max-width:650px;margin:0 auto;}
+        .yellow-card{background:#FFE5B4;border-radius:2rem;padding:2rem 1.8rem;box-shadow:0 25px 40px rgba(0,0,0,0.3);color:#2c2b28;}
+        .logo{text-align:center;margin-bottom:1.5rem;}
+        .logo h1{font-size:2rem;color:#b45f06;}
+        .logo p{color:#a0522d;font-size:0.8rem;}
+        .input-group{margin-bottom:1rem;position:relative;}
+        .input-group label{display:block;font-size:0.75rem;font-weight:600;color:#5a3e1b;margin-bottom:0.3rem;}
+        .input-group input{width:100%;background:rgba(255,255,240,0.9);border:1px solid #e0b354;border-radius:1.5rem;padding:0.7rem 1rem;font-size:0.9rem;outline:none;color:#2c2b28;}
+        .input-group input:focus{border-color:#b45f06;background:#fff7e8;}
+        .input-group input:read-only{background:#f0e0c0;cursor:default;}
+        .tooltip-icon{display:inline-block;width:16px;height:16px;background:#b45f06;color:white;border-radius:50%;text-align:center;font-size:10px;line-height:16px;margin-left:6px;cursor:help;vertical-align:middle;}
+        .tooltip-text{visibility:hidden;background-color:#2c2b28;color:#fff7e8;text-align:center;border-radius:8px;padding:4px 8px;position:absolute;z-index:10;bottom:125%;left:0;white-space:nowrap;font-size:0.7rem;opacity:0;transition:opacity 0.2s;pointer-events:none;}
+        .input-group:hover .tooltip-text{visibility:visible;opacity:1;}
+        .row-2col{display:flex;gap:1rem;}
+        .row-2col .input-group{flex:1;}
+        .btn-register{width:100%;background:#e69500;border:none;border-radius:2rem;padding:0.7rem;font-weight:bold;font-size:1rem;color:white;cursor:pointer;margin-top:0.5rem;}
+        .btn-register:hover{background:#cc7a00;transform:scale(1.01);}
+        .message{background:#2c2b28;border-left:5px solid #e69500;padding:0.5rem 1rem;border-radius:1rem;font-size:0.75rem;margin-bottom:1rem;color:#ffe3b3;}
+        .info-text{text-align:center;font-size:0.7rem;margin-top:1.2rem;color:#5a3e1b;}
+        .info-text a{color:#b45f06;text-decoration:none;font-weight:bold;}
+        .footer{margin-top:2rem;background:#1e2a2e;border-radius:1.5rem;padding:1.5rem 1rem 0.8rem;color:#bbccdd;}
+        .footer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-bottom:1rem;}
+        .footer-section h4{font-size:0.8rem;margin-bottom:0.5rem;color:#ffd966;}
+        .footer-section ul{list-style:none;padding:0;}
+        .footer-section li{margin-bottom:0.3rem;}
+        .footer-section a{font-size:0.7rem;color:#bbccdd;text-decoration:none;}
+        .footer-section a:hover{text-decoration:underline;color:#ffd966;}
+        .footer-bottom{text-align:center;font-size:0.65rem;border-top:1px solid #3a4a4f;padding-top:0.8rem;}
+        @media (max-width:560px){.row-2col{flex-direction:column;gap:0;}.yellow-card{padding:1.5rem;}}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="yellow-card">
+        <div class="logo"><h1>⭐ SAHAN DATA ⭐</h1><p>ku soo biir xidigaha suuq-geynta</p></div>
+        <div id="regMessage" class="message" style="display:none;"></div>
+        <form id="registerForm" onsubmit="return false;">
+            <div class="row-2col">
+                <div class="input-group"><label>📛 Full name <span class="tooltip-icon">?</span><span class="tooltip-text">Magacaaga buuxa</span></label><input type="text" id="fullName" placeholder="Ahmed Ali" required></div>
+                <div class="input-group"><label>📞 Phone <span class="tooltip-icon">?</span><span class="tooltip-text">7-9 digits, e.g., 612345678</span></label><input type="tel" id="phoneNumber" placeholder="612345678" required></div>
+            </div>
+            <div class="input-group"><label>📧 Email <span class="tooltip-icon">?</span><span class="tooltip-text">Email sax ah, loo isticmaali doonaa login</span></label><input type="email" id="email" placeholder="example@domain.com" required></div>
+            <div class="row-2col">
+                <div class="input-group"><label>🏘️ District <span class="tooltip-icon">?</span><span class="tooltip-text">Degmada aad ka soo jeedo</span></label><input type="text" id="district" placeholder="Hodan" required></div>
+                <div class="input-group"><label>🏫 School <span class="tooltip-icon">?</span><span class="tooltip-text">Iskuulka ama jaamacadda</span></label><input type="text" id="school" placeholder="Banadir High" required></div>
+            </div>
+            <div class="row-2col">
+                <div class="input-group"><label>🔒 Password <span class="tooltip-icon">?</span><span class="tooltip-text">Ugu yaraan 6 characters</span></label><input type="password" id="password" placeholder="••••••••" required></div>
+                <div class="input-group"><label>👥 Group Code <span class="tooltip-icon">?</span><span class="tooltip-text">Si toos ah loo qoondeeyay (A-Y)</span></label><input type="text" id="groupCode" readonly value="Loading..."></div>
+            </div>
+            <div class="input-group"><label>🔗 Referral code (optional) <span class="tooltip-icon">?</span><span class="tooltip-text">Koodka martiqaadka qofka kugu soo jiiday</span></label><input type="text" id="referralCode" placeholder="e.g., ABC123"></div>
+            <button type="button" class="btn-register" id="doRegister">✨ Register</button>
+        </form>
+        <div class="info-text">Already have an account? <a href="login.html">Login here</a></div>
+    </div>
+    <div class="footer">
+        <div class="footer-grid">
+            <div class="footer-section"><h4>Account</h4><ul><li><a href="login.html">Login</a></li><li><a href="register.html">Register</a></li><li><a href="edit-profile.html">Edit Profile</a></li></ul></div>
+            <div class="footer-section"><h4>Info</h4><ul><li><a href="faq.html">FAQ</a></li><li><a href="terms.html">Terms</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="policy.html">Policy</a></li><li><a href="admin.html">Admin</a></li></ul></div>
+            <div class="footer-section"><h4>Quick Links</h4><ul><li><a href="index.html">Home</a></li><li><a href="dashboard.html">Dashboard</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="rewards.html">Rewards</a></li></ul></div>
+            <div class="footer-section"><h4>History</h4><ul><li><a href="order-history.html">Order History</a></li><li><a href="referrals.html">Referrals</a></li><li><a href="notifications.html">Notifications</a></li></ul></div>
+            <div class="footer-section"><h4>Support</h4><ul><li><a href="faq.html">Help</a></li><li><a href="terms.html">Legal</a></li></ul></div>
+        </div>
+        <div class="footer-bottom">© 2025 SAHAN DATA — All rights reserved</div>
+    </div>
+</div>
+<script>
+    const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function showMessage(msg, isError) {
+        const div = document.getElementById('regMessage');
+        div.style.display = 'block';
+        div.style.color = isError ? '#ffcccc' : '#ccffcc';
+        div.style.borderLeftColor = isError ? '#cc0000' : '#00aa00';
+        div.innerHTML = isError ? `❌ ${msg}` : `✅ ${msg}`;
+        setTimeout(() => { div.style.display = 'none'; }, 6000);
+    }
+
+    async function fetchGroupCode() {
+        try {
+            console.log("Fetching group code from RPC...");
+            const { data, error } = await sb.rpc('get_next_group_code');
+            if (error) {
+                console.error("RPC get_next_group_code error:", error);
+                throw error;
+            }
+            console.log("Group code received:", data);
+            return data || 'A';
+        } catch (err) {
+            console.error("Failed to fetch group code, using fallback 'A'", err);
+            return 'A';
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        console.log("DOM loaded, fetching group code...");
+        const group = await fetchGroupCode();
+        document.getElementById('groupCode').value = group;
+        console.log("Group code set to:", group);
+    });
+
+    async function handleRegister() {
+        console.log("=== REGISTRATION STARTED ===");
+        const fullName = document.getElementById('fullName').value.trim();
+        const phone = document.getElementById('phoneNumber').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const district = document.getElementById('district').value.trim();
+        const school = document.getElementById('school').value.trim();
+        const password = document.getElementById('password').value;
+        const referralCode = document.getElementById('referralCode').value.trim();
+
+        console.log("Form data:", { fullName, phone, email, district, school, referralCode, passwordLength: password.length });
+
+        if (!fullName || !phone || !email || !district || !school || !password) {
+            console.warn("Validation failed: missing required fields");
+            showMessage('Fadlan buuxi dhammaan goobaha muhiimka ah', true);
+            return;
+        }
+        if (!/^\d{7,9}$/.test(phone)) {
+            console.warn("Validation failed: invalid phone number format", phone);
+            showMessage('Phone number must be 7-9 digits', true);
+            return;
+        }
+        if (password.length < 6) {
+            console.warn("Validation failed: password too short", password.length);
+            showMessage('Password must be at least 6 characters', true);
+            return;
+        }
+
+        showMessage('Processing registration...', false);
+        const btn = document.getElementById('doRegister');
+        btn.disabled = true;
+
+        try {
+            console.log("Step 1: Creating auth user with email:", email);
+            const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
+            if (authError) {
+                console.error("Auth signUp error:", authError);
+                if (authError.message.includes('already registered')) {
+                    showMessage('Email already registered. Please login.', true);
+                } else {
+                    showMessage(authError.message, true);
+                }
+                btn.disabled = false;
+                return;
+            }
+            if (!authData.user) {
+                console.error("Auth signUp returned no user");
+                throw new Error('User creation failed');
+            }
+            const uid = authData.user.id;
+            console.log("Auth user created with UID:", uid);
+
+            console.log("Step 2: Calling register_customer RPC...");
+            const { data: customerData, error: rpcError } = await sb.rpc('register_customer', {
+                p_uid: uid,
+                p_full_name: fullName,
+                p_phone_number: phone,
+                p_email: email,
+                p_district: district,
+                p_school: school,
+                p_referred_by: referralCode || null
+            });
+
+            if (rpcError) {
+                console.error("RPC register_customer error:", rpcError);
+                if (rpcError.message && (rpcError.message.includes('duplicate') || rpcError.message.includes('unique'))) {
+                    showMessage('Phone number or referral code already exists.', true);
+                } else {
+                    showMessage('Registration failed: ' + (rpcError.message || 'Unknown error'), true);
+                }
+                btn.disabled = false;
+                return;
+            }
+            console.log("RPC response:", customerData);
+            const promoCode = customerData?.promo_code || 'N/A';
+            console.log("Registration successful! Promo code:", promoCode);
+            showMessage(`🎉 Registration successful! Your promo code is: ${promoCode}. Redirecting to login...`, false);
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 3000);
+        } catch (err) {
+            console.error("Unexpected error during registration:", err);
+            showMessage(err.message || 'Something went wrong. Please try again.', true);
+            btn.disabled = false;
+        }
+    }
+
+    document.getElementById('doRegister').addEventListener('click', handleRegister);
+    document.querySelectorAll('#registerForm input').forEach(inp => {
+        inp.addEventListener('keypress', e => { if (e.key === 'Enter') handleRegister(); });
+    });
+</script>
+</body>
+</html>

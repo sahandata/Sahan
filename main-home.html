@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>SAHAN DATA - Home & Buyer</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: radial-gradient(circle at 10% 20%, rgba(61, 156, 224, 0.9), rgba(44, 82, 130, 0.95));
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            backdrop-filter: blur(2px);
+        }
+        .glass-container {
+            max-width: 900px;
+            margin: 1rem auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 2.5rem;
+            padding: 1rem;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .header {
+            text-align: center;
+            padding: 0.5rem 0;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #FFF, #FFD966);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 1.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+        .stat-card h3 {
+            font-size: 0.8rem;
+            color: #f59e0b;
+            text-transform: uppercase;
+        }
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+        .live-feed {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 1.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .feed-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .step {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s;
+        }
+        .step.active {
+            background: #f59e0b;
+            color: #1e3c72;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+        }
+        .step-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        .step-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .two-col-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .company-card {
+            background: rgba(248, 249, 250, 0.9);
+            border-radius: 1.5rem;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            position: relative;
+        }
+        .company-card.selected {
+            border-color: currentColor;
+            background: #fff3e0;
+        }
+        .company-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 0.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            background: currentColor;
+        }
+        .selected-ring {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 28px;
+            height: 28px;
+            background: #28a745;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            display: none;
+        }
+        .company-card.selected .selected-ring { display: flex; }
+        .service-item, .plan-item, .payment-item {
+            background: rgba(248, 249, 250, 0.9);
+            border-radius: 1.2rem;
+            padding: 1rem;
+            cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .service-item.selected, .plan-item.selected, .payment-item.selected {
+            border-color: #f59e0b;
+            background: #fff3e0;
+        }
+        .plan-price {
+            font-weight: bold;
+            color: #28a745;
+            margin-top: 0.3rem;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: #1e3c72;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 1.2rem;
+            border: 1px solid #ccc;
+            background: white;
+        }
+        .btn {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 3rem;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 0.5rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b, #e67e22);
+            color: white;
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-back {
+            background: rgba(0,0,0,0.2);
+            color: #1e3c72;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .total-box {
+            background: rgba(240, 244, 249, 0.9);
+            padding: 0.8rem;
+            border-radius: 1.2rem;
+            text-align: center;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+        .message {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 1rem;
+            text-align: center;
+            display: none;
+        }
+        .message.success { background: #d4edda; color: #155724; display: block; }
+        .message.error { background: #f8d7da; color: #721c24; display: block; }
+        .message.info { background: #d1ecf1; color: #0c5460; display: block; }
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            margin-top: 1rem;
+            padding: 0.5rem;
+        }
+        .bottom-nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            color: white;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border-radius: 2rem;
+        }
+        .bottom-nav-item i {
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+        .bottom-nav-item.active {
+            background: #f59e0b;
+            color: #1e3c72;
+        }
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: block;
+        }
+        .footer-links {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            border-radius: 1.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .footer-links-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+        .footer-links-grid a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.7rem;
+            background: rgba(255,255,255,0.15);
+            padding: 0.3rem 0.7rem;
+            border-radius: 2rem;
+        }
+        @media (max-width: 640px) {
+            .two-col-grid { grid-template-columns: 1fr; }
+            .glass-container { margin: 0.5rem; padding: 0.8rem; }
+            .company-logo { width: 60px; height: 60px; font-size: 1.5rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="glass-container">
+    <div class="header">
+        <h1><i class="fas fa-star"></i> SAHAN DATA <i class="fas fa-star"></i></h1>
+        <p style="color:#ffd966;">Ku soo Xidigaha Suuq-geynta</p>
+    </div>
+
+    <!-- Stats always visible -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><h3>Total Users</h3><div class="value" id="totalUsers">0</div></div>
+        <div class="stat-card"><h3>Total Orders</h3><div class="value" id="totalOrders">0</div></div>
+        <div class="stat-card"><h3>Total Transactions</h3><div class="value" id="totalTransactions">0</div></div>
+        <div class="stat-card"><h3>Total Referrals</h3><div class="value" id="totalReferrals">0</div></div>
+        <div class="stat-card"><h3>Total Districts</h3><div class="value" id="totalDistricts">0</div></div>
+        <div class="stat-card"><h3>Total Groups</h3><div class="value" id="totalGroups">0</div></div>
+        <div class="stat-card"><h3>Total Schools</h3><div class="value" id="totalSchools">0</div></div>
+        <div class="stat-card"><h3>Bonus Points</h3><div class="value" id="totalBonusPoints">0</div></div>
+    </div>
+
+    <!-- Home View -->
+    <div id="homeView" class="view active">
+        <div class="live-feed">
+            <h4 style="color:#f59e0b;"><i class="fas fa-bolt"></i> Live Feed</h4>
+            <div id="feedItems"><div class="loading">Connecting...</div></div>
+        </div>
+    </div>
+
+    <!-- Buyer View (5-step wizard) -->
+    <div id="buyerView" class="view">
+        <div class="step-indicator">
+            <div class="step active" data-step="1">1</div>
+            <div class="step" data-step="2">2</div>
+            <div class="step" data-step="3">3</div>
+            <div class="step" data-step="4">4</div>
+            <div class="step" data-step="5">5</div>
+        </div>
+
+        <!-- Step 1: Companies -->
+        <div id="step1" class="step-content active">
+            <div class="two-col-grid" id="companyGrid"></div>
+            <button class="btn btn-primary" id="nextStep1" disabled>Next →</button>
+        </div>
+
+        <!-- Step 2: Services -->
+        <div id="step2" class="step-content">
+            <div id="serviceList" class="two-col-grid"></div>
+            <div class="nav-buttons">
+                <button class="btn btn-back" id="backStep2">← Back</button>
+                <button class="btn btn-primary" id="nextStep2" disabled>Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Plans -->
+        <div id="step3" class="step-content">
+            <div id="planList" class="two-col-grid"></div>
+            <div class="nav-buttons">
+                <button class="btn btn-back" id="backStep3">← Back</button>
+                <button class="btn btn-primary" id="nextStep3" disabled>Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Payment Method -->
+        <div id="step4" class="step-content">
+            <div class="two-col-grid">
+                <div class="payment-item" data-payment="evc"><strong>💵 EVC Plus</strong><br><span>Hormuud</span></div>
+                <div class="payment-item" data-payment="edahab"><strong>💎 eDahab</strong><br><span>Somtel</span></div>
+                <div class="payment-item" data-payment="jeeb"><strong>📱 Jeeb</strong><br><span>Somnet</span></div>
+            </div>
+            <div class="total-box" id="paymentTotal">💰 Total: $0.00</div>
+            <div class="nav-buttons">
+                <button class="btn btn-back" id="backStep4">← Back</button>
+                <button class="btn btn-primary" id="nextStep4" disabled>Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 5: Payment details & Confirm -->
+        <div id="step5" class="step-content">
+            <div id="selectedPlanInfo" style="background:#e8f0fe; padding:1rem; border-radius:1.2rem; margin-bottom:1rem;"></div>
+            <div class="two-col-grid">
+                <div class="input-group"><label>📞 Lambarka diraya (EVC/eDahab) *</label><input type="tel" id="senderPhone" placeholder="612345678"></div>
+                <div class="input-group"><label>📱 Lambarka helaya (data) *</label><input type="tel" id="receiverPhone" placeholder="612345678"></div>
+                <div class="input-group"><label>🎯 Promo Code (saaxiib)</label><input type="text" id="promoCode" placeholder="4 digits" maxlength="4"></div>
+                <div></div>
+            </div>
+            <div class="total-box" id="finalTotal">💰 Total: $0.00</div>
+            <button class="btn btn-primary" id="confirmOrderBtn" style="background:#1e3c72;">💳 Confirm & Pay</button>
+            <button class="btn btn-back" id="backStep5">← Back</button>
+            <div id="paymentMessage" class="message"></div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="bottom-nav-item" id="tabHome"><i class="fas fa-home"></i><span>Home</span></div>
+        <div class="bottom-nav-item" id="tabBuyer"><i class="fas fa-shopping-cart"></i><span>Buyer</span></div>
+    </div>
+
+    <!-- Footer links -->
+    <div class="footer-links">
+        <div class="footer-links-grid">
+            <a href="index.html">Home</a>
+            <a href="login.html">Login</a>
+            <a href="register.html">Register</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="admin.html">Admin</a>
+            <a href="leaderboard.html">Leaderboard</a>
+            <a href="rewards.html">Rewards</a>
+            <a href="order-history.html">Order History</a>
+            <a href="referrals.html">Referrals</a>
+            <a href="notifications.html">Notifications</a>
+            <a href="edit-profile.html">Edit Profile</a>
+            <a href="faq.html">FAQ</a>
+            <a href="terms.html">Terms</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="policy.html">Policy</a>
+        </div>
+        <p style="margin-top:0.5rem; font-size:0.6rem; color:#ccc;">&copy; 2026 SAHAN DATA</p>
+    </div>
+</div>
+
+<script>
+    // ======================== SUPABASE ========================
+    const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ======================== HOME VIEW LOGIC ========================
+    async function getRPC(func) {
+        try { const { data, error } = await sb.rpc(func); if (error) throw error; return data || 0; } catch(e) { return 0; }
+    }
+    async function loadStats() {
+        document.getElementById('totalUsers').innerText = await getRPC('get_total_users');
+        document.getElementById('totalOrders').innerText = await getRPC('get_total_orders');
+        document.getElementById('totalTransactions').innerText = await getRPC('get_total_transactions');
+        document.getElementById('totalReferrals').innerText = await getRPC('get_total_referrals_sum');
+        document.getElementById('totalDistricts').innerText = await getRPC('get_total_districts');
+        document.getElementById('totalGroups').innerText = await getRPC('get_total_groups');
+        document.getElementById('totalSchools').innerText = await getRPC('get_total_schools');
+        const { data: bonus } = await sb.from('customers').select('bonus_points');
+        document.getElementById('totalBonusPoints').innerText = bonus?.reduce((a,b)=>a+(b.bonus_points||0),0) || 0;
+    }
+    async function loadRecentOrders() {
+        const { data } = await sb.from('orders').select('order_number, amount').order('created_at', { ascending: false }).limit(5);
+        const feedDiv = document.getElementById('feedItems');
+        if (!data || data.length === 0) { feedDiv.innerHTML = '<div class="loading">No recent orders</div>'; return; }
+        feedDiv.innerHTML = '';
+        data.forEach(order => {
+            const div = document.createElement('div');
+            div.className = 'feed-item';
+            div.innerHTML = `<i class="fas fa-shopping-cart"></i> Order: ${order.order_number} ($${order.amount})`;
+            feedDiv.appendChild(div);
+        });
+    }
+    let feedChannel;
+    function subscribeToOrders() {
+        if (feedChannel) feedChannel.unsubscribe();
+        feedChannel = sb.channel('home-feed')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => { loadRecentOrders(); loadStats(); })
+            .subscribe();
+    }
+    loadStats();
+    loadRecentOrders();
+    subscribeToOrders();
+
+    // ======================== BUYER VIEW LOGIC ========================
+    const companies = [
+        { id: "hormuud", name: "Hormuud", color: "#2e7d32", logoChar: "H", column: "left" },
+        { id: "somtel", name: "Somtel", color: "#fbc02d", logoChar: "S", column: "right", textColor: "#000" },
+        { id: "somnet", name: "Somnet", color: "#1976d2", logoChar: "S", column: "left" },
+        { id: "amtel", name: "Amtel", color: "#d32f2f", logoChar: "A", column: "right", textColor: "#fff" },
+        { id: "somlink", name: "SomLink", color: "#b85c1a", logoChar: "🧲", column: "left" }
+    ];
+
+    const servicesData = {
+        hormuud: ["Unlimited Data", "Anfac Plus GB", "Anfac", "ADSL PLUS", "Recharge Voice", "Hormuud Voice"],
+        somtel: ["Dhameeys Unlimited", "Abaal GB", "Kaar", "Muraadso"],
+        somnet: ["Kaafi 829", "Kaafi Unlimited", "Kaafi Voice", "Maqsuud GB", "Qanciye Call+GB"],
+        amtel: ["Bulaal Unlimited", "Tanaad GB"],
+        somlink: ["Unlimited Data (SomLink)", "Kaafiye GB"]
+    };
+
+    const plansData = {
+        "Unlimited Data": [
+            { name: "Daily Unlimited", price: 0.70, amount_cents: 70, period: "24 Hrs" },
+            { name: "Weekly Unlimited", price: 5.00, amount_cents: 500, period: "7 Days" },
+            { name: "Monthly Unlimited", price: 17.50, amount_cents: 1750, period: "30 Days" }
+        ],
+        "Anfac Plus GB": [
+            { name: "400MB + 10min", price: 0.23, amount_cents: 23, period: "24 Hrs" },
+            { name: "2GB + 80min", price: 0.90, amount_cents: 90, period: "15 Days" },
+            { name: "5GB + 160min", price: 1.78, amount_cents: 178, period: "30 Days" }
+        ],
+        "Anfac": [
+            { name: "8 min", price: 0.09, amount_cents: 9, period: "30 Days" },
+            { name: "40 min", price: 0.45, amount_cents: 45, period: "30 Days" },
+            { name: "80 min", price: 0.89, amount_cents: 89, period: "30 Days" }
+        ],
+        "ADSL PLUS": [
+            { name: "ADSL 200min", price: 22.00, amount_cents: 2200, period: "30 Days" },
+            { name: "ADSL 400min", price: 43.60, amount_cents: 4360, period: "30 Days" }
+        ],
+        "Recharge Voice": [{ name: "Recharge Voice", price: 1.00, amount_cents: 100, period: "30 Days" }],
+        "Hormuud Voice": [{ name: "Hormuud Voice", price: 0.43, amount_cents: 43, period: "24 Hrs" }],
+        "Dhameeys Unlimited": [
+            { name: "6 Hrs", price: 0.18, amount_cents: 18, period: "6 Hrs" },
+            { name: "24 Hrs", price: 0.60, amount_cents: 60, period: "24 Hrs" },
+            { name: "30 Days", price: 15.00, amount_cents: 1500, period: "30 Days" }
+        ],
+        "Abaal GB": [
+            { name: "425MB + 12min", price: 0.23, amount_cents: 23, period: "No Expiry" },
+            { name: "1.2GB + 35min", price: 0.46, amount_cents: 46, period: "No Expiry" }
+        ],
+        "Kaar": [
+            { name: "$1 Airtime", price: 0.90, amount_cents: 90, period: "30 Days" },
+            { name: "$5 Airtime", price: 4.40, amount_cents: 440, period: "30 Days" }
+        ],
+        "Muraadso": [
+            { name: "Daily Social", price: 0.22, amount_cents: 22, period: "24 Hrs" },
+            { name: "30 Days Social", price: 4.50, amount_cents: 450, period: "30 Days" }
+        ],
+        "Kaafi 829": [
+            { name: "6 Hrs", price: 0.18, amount_cents: 18, period: "6 Hrs" },
+            { name: "12 Hrs", price: 0.30, amount_cents: 30, period: "12 Hrs" }
+        ],
+        "Kaafi Unlimited": [
+            { name: "24 Hrs", price: 0.60, amount_cents: 60, period: "24 Hrs" },
+            { name: "30 Days", price: 15.00, amount_cents: 1500, period: "30 Days" }
+        ],
+        "Kaafi Voice": [
+            { name: "24 Hrs Voice", price: 0.19, amount_cents: 19, period: "24 Hrs" },
+            { name: "30 Days Voice", price: 4.50, amount_cents: 450, period: "30 Days" }
+        ],
+        "Maqsuud GB": [
+            { name: "425MB", price: 0.25, amount_cents: 25, period: "No Expiry" },
+            { name: "1.2GB", price: 0.44, amount_cents: 44, period: "No Expiry" }
+        ],
+        "Qanciye Call+GB": [
+            { name: "1.2GB + 35min", price: 0.45, amount_cents: 45, period: "No Expiry" },
+            { name: "2.5GB + 92min", price: 0.90, amount_cents: 90, period: "No Expiry" }
+        ],
+        "Bulaal Unlimited": [
+            { name: "3 Days", price: 0.92, amount_cents: 92, period: "3 Days" },
+            { name: "30 Days", price: 9.00, amount_cents: 900, period: "30 Days" }
+        ],
+        "Tanaad GB": [
+            { name: "2GB + 600min", price: 0.45, amount_cents: 45, period: "7 Days" },
+            { name: "25GB + Unlimited Calls", price: 4.50, amount_cents: 450, period: "30 Days" }
+        ],
+        "Unlimited Data (SomLink)": [
+            { name: "24 Hrs", price: 0.45, amount_cents: 45, period: "24 Hrs" },
+            { name: "30 Days", price: 13.50, amount_cents: 1350, period: "30 Days" }
+        ],
+        "Kaafiye GB": [
+            { name: "2GB", price: 0.44, amount_cents: 44, period: "30 Days" },
+            { name: "6GB", price: 0.89, amount_cents: 89, period: "30 Days" }
+        ]
+    };
+
+    const ussdConfig = {
+        evc: { prefix: "*712*", number: "612538844", suffix: "#" },
+        edahab: { prefix: "*712*", number: "622538844", suffix: "#" },
+        jeeb: { prefix: "*812*", number: "682118366", suffix: "#" }
+    };
+
+    let selectedCompany = null, selectedService = null, selectedPlan = null, selectedPayment = null, currentStep = 1;
+    let currentCompanyColor = "#f59e0b";
+
+    const companyGrid = document.getElementById('companyGrid');
+    const serviceListDiv = document.getElementById('serviceList');
+    const planListDiv = document.getElementById('planList');
+    const nextStep1 = document.getElementById('nextStep1');
+    const nextStep2 = document.getElementById('nextStep2');
+    const nextStep3 = document.getElementById('nextStep3');
+    const nextStep4 = document.getElementById('nextStep4');
+    const backStep2 = document.getElementById('backStep2');
+    const backStep3 = document.getElementById('backStep3');
+    const backStep4 = document.getElementById('backStep4');
+    const backStep5 = document.getElementById('backStep5');
+    const confirmOrderBtn = document.getElementById('confirmOrderBtn');
+    const paymentTotal = document.getElementById('paymentTotal');
+    const finalTotal = document.getElementById('finalTotal');
+    const orderSummaryDiv = document.getElementById('selectedPlanInfo');
+    const paymentMessage = document.getElementById('paymentMessage');
+    const senderPhone = document.getElementById('senderPhone');
+    const receiverPhone = document.getElementById('receiverPhone');
+    const promoCodeInput = document.getElementById('promoCode');
+
+    function showStep(step) {
+        document.querySelectorAll('#buyerView .step-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step${step}`).classList.add('active');
+        document.querySelectorAll('#buyerView .step').forEach((el, idx) => {
+            if (idx+1 === step) el.classList.add('active');
+            else el.classList.remove('active');
+        });
+        currentStep = step;
+    }
+
+    function createCompanyCard(comp) {
+        const card = document.createElement('div');
+        card.className = 'company-card';
+        card.dataset.id = comp.id;
+        card.dataset.name = comp.name;
+        card.dataset.color = comp.color;
+        const logoDiv = document.createElement('div');
+        logoDiv.className = 'company-logo';
+        logoDiv.style.backgroundColor = comp.color;
+        if (comp.textColor) logoDiv.style.color = comp.textColor;
+        else logoDiv.style.color = 'white';
+        logoDiv.textContent = comp.logoChar;
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'company-name';
+        nameDiv.textContent = comp.name;
+        const ringDiv = document.createElement('div');
+        ringDiv.className = 'selected-ring';
+        ringDiv.innerHTML = '<i class="fas fa-check"></i>';
+        card.appendChild(logoDiv);
+        card.appendChild(nameDiv);
+        card.appendChild(ringDiv);
+        card.addEventListener('click', () => selectCompany(card, comp));
+        return card;
+    }
+
+    function renderCompanies() {
+        companyGrid.innerHTML = '';
+        const leftItems = companies.filter(c => c.column === 'left');
+        const rightItems = companies.filter(c => c.column === 'right');
+        const maxRows = Math.max(leftItems.length, rightItems.length);
+        for (let i = 0; i < maxRows; i++) {
+            if (i < leftItems.length) companyGrid.appendChild(createCompanyCard(leftItems[i]));
+            else { const empty = document.createElement('div'); empty.style.visibility = 'hidden'; empty.style.minHeight = '100px'; companyGrid.appendChild(empty); }
+            if (i < rightItems.length) companyGrid.appendChild(createCompanyCard(rightItems[i]));
+            else { const empty = document.createElement('div'); empty.style.visibility = 'hidden'; empty.style.minHeight = '100px'; companyGrid.appendChild(empty); }
+        }
+    }
+
+    function selectCompany(card, comp) {
+        document.querySelectorAll('.company-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedCompany = comp.id;
+        currentCompanyColor = comp.color;
+        nextStep1.disabled = false;
+        nextStep1.style.background = `linear-gradient(135deg, ${comp.color}, ${comp.color}dd)`;
+    }
+
+    function loadServices() {
+        const services = servicesData[selectedCompany] || [];
+        serviceListDiv.innerHTML = '';
+        services.forEach(svc => {
+            const div = document.createElement('div');
+            div.className = 'service-item';
+            div.textContent = svc;
+            div.dataset.service = svc;
+            div.addEventListener('click', () => {
+                document.querySelectorAll('.service-item').forEach(i => i.classList.remove('selected'));
+                div.classList.add('selected');
+                selectedService = svc;
+                nextStep2.disabled = false;
+                nextStep2.style.background = `linear-gradient(135deg, ${currentCompanyColor}, ${currentCompanyColor}dd)`;
+            });
+            serviceListDiv.appendChild(div);
+        });
+        nextStep2.disabled = true;
+        selectedService = null;
+    }
+
+    function loadPlans() {
+        const plans = plansData[selectedService] || [];
+        planListDiv.innerHTML = '';
+        plans.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'plan-item';
+            div.innerHTML = `<div><strong>${p.name}</strong><br><span style="font-size:0.7rem;">${p.period}</span></div><div class="plan-price">$${p.price}</div>`;
+            div.dataset.plan = JSON.stringify(p);
+            div.addEventListener('click', () => {
+                document.querySelectorAll('.plan-item').forEach(i => i.classList.remove('selected'));
+                div.classList.add('selected');
+                selectedPlan = p;
+                paymentTotal.innerText = `💰 Total: $${selectedPlan.price.toFixed(2)}`;
+                finalTotal.innerText = `💰 Total: $${selectedPlan.price.toFixed(2)}`;
+                nextStep3.disabled = false;
+                nextStep3.style.background = `linear-gradient(135deg, ${currentCompanyColor}, ${currentCompanyColor}dd)`;
+            });
+            planListDiv.appendChild(div);
+        });
+        nextStep3.disabled = true;
+        selectedPlan = null;
+    }
+
+    // Payment method selection (step4)
+    document.querySelectorAll('.payment-item').forEach(el => {
+        el.addEventListener('click', () => {
+            document.querySelectorAll('.payment-item').forEach(i => i.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedPayment = el.dataset.payment;
+            nextStep4.disabled = false;
+            nextStep4.style.background = `linear-gradient(135deg, ${currentCompanyColor}, ${currentCompanyColor}dd)`;
+        });
+    });
+
+    function validateStep5() {
+        const sender = senderPhone.value.trim();
+        const receiver = receiverPhone.value.trim();
+        const phoneRegex = /^(\+252|0)?(61|62|63|68|69)[0-9]{7}$/;
+        if (!phoneRegex.test(sender)) { alert('Lambar diraya khaldan'); return false; }
+        if (receiver && !phoneRegex.test(receiver)) { alert('Lambar helaya khaldan'); return false; }
+        return true;
+    }
+
+    function updateSummary() {
+        const providerName = companies.find(c=>c.id===selectedCompany)?.name;
+        orderSummaryDiv.innerHTML = `<strong>${selectedPlan.name}</strong><br>Shirkada: ${providerName}<br>Qiimaha: $${selectedPlan.price}<br>Muddada: ${selectedPlan.period}<br>Lambar diraya: ${senderPhone.value.trim()}<br>Lambar helaya: ${receiverPhone.value.trim() || 'isku mid'}<br>Promo Code: ${promoCodeInput.value.trim() || 'None'}`;
+    }
+
+    async function getCurrentUserId() {
+        const { data: { user } } = await sb.auth.getUser();
+        if (!user) return null;
+        const { data: cust } = await sb.from('customers').select('id').eq('uid', user.id).single();
+        return cust?.id || null;
+    }
+
+    async function getProductId(name, provider) {
+        const { data } = await sb.from('products').select('id').eq('name', name).eq('provider', provider).maybeSingle();
+        return data?.id || null;
+    }
+
+    async function createOrder(sender, productId, promo, receiver) {
+        const { data, error } = await sb.rpc('create_order', {
+            p_customer_id: await getCurrentUserId(),
+            p_customer_phone: sender,
+            p_product_id: productId,
+            p_promo_code: promo || null,
+            p_receiver_phone: receiver || null
+        });
+        if (error) throw error;
+        return data;
+    }
+
+    async function processOrder() {
+        if (!selectedPayment) {
+            alert('Fadlan dooro habka bixinta (EVC/eDahab/Jeeb) marka hore');
+            return;
+        }
+        const sender = senderPhone.value.trim();
+        const receiver = receiverPhone.value.trim() || null;
+        const promo = promoCodeInput.value.trim() || null;
+        const msgDiv = paymentMessage;
+        if (!sender || !receiver) { alert('Fadlan gali labada lambar'); return; }
+        if (!selectedPlan) { alert('Fadlan dooro plan'); return; }
+        if (!validateStep5()) return;
+        msgDiv.className = 'message info';
+        msgDiv.innerHTML = 'Processing order...';
+        msgDiv.style.display = 'block';
+        try {
+            const providerName = companies.find(c=>c.id===selectedCompany)?.name;
+            const productId = await getProductId(selectedPlan.name, providerName);
+            if (!productId) throw new Error('Product not found');
+            const order = await createOrder(sender, productId, promo, receiver);
+            if (!order.success) throw new Error(order.error || 'Order failed');
+            const config = ussdConfig[selectedPayment];
+            const ussd = `${config.prefix}${config.number}*${selectedPlan.amount_cents}${config.suffix}`;
+            msgDiv.className = 'message success';
+            msgDiv.innerHTML = `✅ Macmiil xogta aad Soo qortay waa la keydiyay, hada waad soo dirsan kartaa lacagtaada<br>Order: ${order.order_number}<br>Amount: $${order.amount}<br>USSD: ${ussd}<br><span id="countdown">Dialing in 3s...</span>`;
+            let countdown = 3;
+            const interval = setInterval(() => {
+                countdown--;
+                const span = document.getElementById('countdown');
+                if (span) span.innerText = `Dialing in ${countdown}s...`;
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    window.location.href = `tel:${ussd}`;
+                }
+            }, 1000);
+            setTimeout(() => {
+                selectedCompany = null; selectedService = null; selectedPlan = null; selectedPayment = null;
+                document.querySelectorAll('.company-card, .service-item, .plan-item, .payment-item').forEach(el => el.classList.remove('selected'));
+                senderPhone.value = ''; receiverPhone.value = ''; promoCodeInput.value = '';
+                showStep(1);
+                nextStep1.disabled = true;
+            }, 5000);
+        } catch (err) {
+            msgDiv.className = 'message error';
+            msgDiv.innerHTML = `❌ Payment failed: ${err.message}`;
+        }
+    }
+
+    nextStep1.addEventListener('click', () => {
+        if (!selectedCompany) return;
+        loadServices();
+        showStep(2);
+    });
+    backStep2.addEventListener('click', () => showStep(1));
+    nextStep2.addEventListener('click', () => {
+        if (!selectedService) return;
+        loadPlans();
+        showStep(3);
+    });
+    backStep3.addEventListener('click', () => showStep(2));
+    nextStep3.addEventListener('click', () => {
+        if (!selectedPlan) return;
+        paymentTotal.innerText = `💰 Total: $${selectedPlan.price.toFixed(2)}`;
+        finalTotal.innerText = `💰 Total: $${selectedPlan.price.toFixed(2)}`;
+        showStep(4);
+    });
+    backStep4.addEventListener('click', () => showStep(3));
+    nextStep4.addEventListener('click', () => {
+        if (!selectedPayment) return;
+        showStep(5);
+    });
+    backStep5.addEventListener('click', () => showStep(4));
+    confirmOrderBtn.addEventListener('click', processOrder);
+
+    renderCompanies();
+
+    // Tab navigation
+    const homeView = document.getElementById('homeView');
+    const buyerView = document.getElementById('buyerView');
+    const tabHome = document.getElementById('tabHome');
+    const tabBuyer = document.getElementById('tabBuyer');
+
+    function setActiveTab(tab) {
+        if (tab === 'home') {
+            homeView.classList.add('active');
+            buyerView.classList.remove('active');
+            tabHome.classList.add('active');
+            tabBuyer.classList.remove('active');
+        } else {
+            homeView.classList.remove('active');
+            buyerView.classList.add('active');
+            tabHome.classList.remove('active');
+            tabBuyer.classList.add('active');
+        }
+    }
+    tabHome.addEventListener('click', () => setActiveTab('home'));
+    tabBuyer.addEventListener('click', () => setActiveTab('buyer'));
+    setActiveTab('home');
+</script>
+</body>
+</html>

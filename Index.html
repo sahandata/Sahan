@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA - Home</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: linear-gradient(145deg, #3d9ce0 0%, #73c2f0 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
+        .container { max-width: 1200px; width: 100%; margin: 0 auto; }
+        .title-section { text-align: center; margin-bottom: 2rem; }
+        .title-section h1 { font-size: 2.5rem; color: white; display: flex; align-items: center; justify-content: center; gap: 1rem; }
+        .title-section h2 { font-size: 1rem; color: #ffd966; font-weight: 500; }
+        
+        /* Tabs navigation */
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem;
+            border-radius: 2rem;
+        }
+        .nav-tabs a {
+            background: white;
+            color: #1e3c72;
+            text-decoration: none;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .nav-tabs a:hover {
+            background: #ffd966;
+            color: #2c3e66;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .stat-card h3 { color: #f59e0b; font-size: 0.8rem; margin-bottom: 0.3rem; text-transform: uppercase; }
+        .stat-card .value { font-size: 2rem; font-weight: bold; color: #1e3c72; }
+        
+        .live-feed {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            max-height: 350px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .live-feed h3 { color: #1e3c72; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+        .feed-item { padding: 0.5rem; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; }
+        .feed-item i { color: #f59e0b; width: 1.5rem; }
+        .loading { text-align: center; padding: 1rem; color: #718096; }
+        
+        /* Footer horizontal single line */
+        .footer {
+            margin-top: 0;
+            background: #ffd966;
+            border-radius: 1rem;
+            padding: 1rem;
+            overflow-x: auto;
+            width: 100%;
+        }
+        .footer-grid {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            gap: 1rem;
+            min-width: 600px;
+        }
+        .footer-section {
+            flex: 1;
+            min-width: 120px;
+        }
+        .footer-section h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            color: #2c3e66;
+            font-weight: 600;
+        }
+        .footer-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        .footer-section li {
+            margin-bottom: 0.3rem;
+        }
+        .footer-section a {
+            font-size: 0.75rem;
+            color: #2c3e66;
+            text-decoration: none;
+        }
+        .footer-section a:hover {
+            text-decoration: underline;
+        }
+        .footer-contact p {
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 1rem;
+            font-size: 0.7rem;
+            border-top: 1px solid rgba(44,62,102,0.2);
+            margin-top: 1rem;
+        }
+        @media (max-width: 640px) {
+            .footer-grid {
+                min-width: 550px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="title-section">
+        <h1><span class="trophy">⭐</span> SAHAN DATA <span class="trophy">⭐</span></h1>
+        <h2>Ku Soo Biir Xidigaha Suuq-geynta</h2>
+    </div>
+    
+    <!-- Navigation Tabs (all pages) -->
+    <div class="nav-tabs">
+        <a href="index.html">Home</a>
+        <a href="login.html">Login</a>
+        <a href="register.html">Register</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admin.html">Admin</a>
+        <a href="leaderboard.html">Leaderboard</a>
+        <a href="rewards.html">Rewards</a>
+       <a href="buy.html">Buy</a>
+        <a href="edit-profile.html">Edit Profile</a>
+        <a href="order-history.html">Order History</a>
+        <a href="referrals.html">Referrals</a>
+        <a>Notifications</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="faq.html">FAQ</a>
+        <a href="policy.html">Policy</a>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card"><h3>Total Users</h3><div class="value" id="totalUsers">0</div></div>
+        <div class="stat-card"><h3>Total Orders</h3><div class="value" id="totalOrders">0</div></div>
+        <div class="stat-card"><h3>Total Transactions</h3><div class="value" id="totalTransactions">0</div></div>
+        <div class="stat-card"><h3>Total Referrals</h3><div class="value" id="totalReferrals">0</div></div>
+        <div class="stat-card"><h3>Total Districts</h3><div class="value" id="totalDistricts">0</div></div>
+        <div class="stat-card"><h3>Total Groups</h3><div class="value" id="totalGroups">0</div></div>
+        <div class="stat-card"><h3>Total Schools</h3><div class="value" id="totalSchools">0</div></div>
+        <div class="stat-card"><h3>Total Bonus Points</h3><div class="value" id="totalBonusPoints">0</div></div>
+    </div>
+    
+    <div class="live-feed">
+        <h3><i class="fas fa-bolt"></i> Live Feed</h3>
+        <div id="feedItems"><div class="loading">Connecting to live feed...</div></div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-grid">
+            <div class="footer-section">
+                <h4>Account</h4>
+                <ul><li><a href="login.html">Login</a></li><li><a href="register.html">Register</a></li><li><a href="edit-profile.html">Edit Profile</a></li></ul>
+            </div>
+            <div class="footer-section">
+                <h4>Info</h4>
+                <ul><li><a href="faq.html">FAQ</a></li><li><a href="terms.html">Terms</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="admin.html">Admin</a></li></ul>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul><li><a href="index.html">Home</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="rewards.html">Suuqgeyntu & Abaalmarinta</a></li><li><a href="rewards.html">Reward</a></li></ul>
+            </div>
+            <div class="footer-section">
+                <h4>History &amp; Contact</h4>
+                <ul><li><a href="order-history.html">Order History</a></li><li><a href="referrals.html">Referrals</a></li><li><a href="notifications.html">Notifications</a></li></ul>
+                <div class="footer-contact">
+                    <p><i class="fab fa-whatsapp"></i> +252 61 253 8844</p>
+                    <p><i class="fas fa-phone"></i> +252 61 253 8844</p>
+                    <p><i class="fas fa-envelope"></i> support@sahandata.com</p>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2026 SAHAN DATA - All rights reserved.</p></div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    async function getRPC(func) { try { const { data, error } = await sb.rpc(func); if (error) throw error; return data || 0; } catch(e) { return 0; } }
+    async function loadStats() {
+        const totalUsers = await getRPC('get_total_users');
+        const totalOrders = await getRPC('get_total_orders');
+        const totalTransactions = await getRPC('get_total_transactions');
+        const totalReferrals = await getRPC('get_total_referrals_sum');
+        const totalDistricts = await getRPC('get_total_districts');
+        const totalGroups = await getRPC('get_total_groups');
+        const totalSchools = await getRPC('get_total_schools');
+        const { data: bonusData } = await sb.from('customers').select('bonus_points');
+        const totalBonus = bonusData?.reduce((a,b)=> a + (b.bonus_points||0), 0) || 0;
+        document.getElementById('totalUsers').innerText = totalUsers;
+        document.getElementById('totalOrders').innerText = totalOrders;
+        document.getElementById('totalTransactions').innerText = totalTransactions;
+        document.getElementById('totalReferrals').innerText = totalReferrals;
+        document.getElementById('totalDistricts').innerText = totalDistricts;
+        document.getElementById('totalGroups').innerText = totalGroups;
+        document.getElementById('totalSchools').innerText = totalSchools;
+        document.getElementById('totalBonusPoints').innerText = totalBonus;
+    }
+    async function loadRecentOrders() {
+        const { data } = await sb.from('orders').select('order_number, amount').order('created_at', { ascending: false }).limit(5);
+        const feedDiv = document.getElementById('feedItems');
+        if (!data || data.length === 0) { feedDiv.innerHTML = '<div class="loading">No recent orders</div>'; return; }
+        feedDiv.innerHTML = '';
+        data.forEach(order => {
+            const div = document.createElement('div');
+            div.className = 'feed-item';
+            div.innerHTML = `<i class="fas fa-shopping-cart"></i> Order: ${order.order_number} ($${order.amount})`;
+            feedDiv.appendChild(div);
+        });
+    }
+    let feedChannel;
+    function subscribeToOrders() {
+        if (feedChannel) feedChannel.unsubscribe();
+        feedChannel = sb.channel('public:orders')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => { loadRecentOrders(); loadStats(); })
+            .subscribe();
+    }
+    loadStats();
+    loadRecentOrders();
+    subscribeToOrders();
+</script>
+</body>
+</html>
