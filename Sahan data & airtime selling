@@ -1,0 +1,262 @@
+# ⭐ SAHAN DATA
+
+**SAHAN DATA** is a web platform where users can purchase data packages and call minutes, earn rewards through referrals and promo codes, and compete in weekly, monthly, and annual leaderboards. The system is built with a **Supabase backend** (PostgreSQL) and a **static frontend** (HTML/CSS/JS) deployed on GitHub Pages.
+
+---
+
+## 📌 Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Backend Schema](#backend-schema)
+- [RPC Functions](#rpc-functions)
+- [Frontend Structure](#frontend-structure)
+- [Reward System](#reward-system)
+- [Deployment](#deployment)
+- [Future Improvements](#future-improvements)
+- [License](#license)
+
+---
+
+## 🚀 Features
+
+- User registration & login via **email/password** or **promo code** (acts as username)
+- Purchase data packages using a **5-step wizard** (provider → service → plan → payment method → sender/receiver + promo code)
+- **USSD auto-dial** after successful order
+- **Referral system** – each user gets a unique 6‑character referral code and a shareable link
+- **Promo code system** – sequential numeric code (1,2,3,…) used during checkout to track promotions
+- **Leaderboards** – top referrers (weekly), top sellers & top promoted (monthly), top districts/groups/schools
+- **Reward distribution** – bonus points, free packages, and certificates awarded automatically via RPC functions
+- **Admin panel** – manage orders and products (admin only)
+- **Real‑time order feed** on the homepage
+- **Mobile‑responsive** glassmorphism design
+
+---
+
+## 🛠 Tech Stack
+
+| Layer       | Technology                          |
+|-------------|-------------------------------------|
+| Frontend    | HTML5, CSS3, JavaScript (vanilla)   |
+| Backend     | Supabase (PostgreSQL + Auth)        |
+| Hosting     | GitHub Pages                        |
+| APIs        | Supabase JS Client, RPC functions   |
+
+---
+
+## 🗄 Backend Schema
+
+### 1. `customers` – user profiles
+
+| Column               | Type        | Constraints                                 |
+|----------------------|-------------|---------------------------------------------|
+| `id`                 | UUID        | PRIMARY KEY                                 |
+| `uid`                | UUID        | NOT NULL, UNIQUE, REFERENCES `auth.users`   |
+| `full_name`          | TEXT        | NOT NULL                                    |
+| `phone_number`       | TEXT        | NOT NULL, UNIQUE, CHECK (Somali format)     |
+| `email`              | TEXT        | UNIQUE                                      |
+| `district`           | TEXT        | NOT NULL                                    |
+| `group_code`         | CHAR(1)     | NOT NULL, CHECK (A–Y)                       |
+| `school`             | TEXT        | NOT NULL                                    |
+| `referral_code`      | CHAR(6)     | NOT NULL, UNIQUE                            |
+| `promo_code`         | TEXT        | NOT NULL, UNIQUE (sequential 1,2,3,…)       |
+| `referred_by`        | UUID        | NULL, REFERENCES `customers(id)`            |
+| `status`             | TEXT        | DEFAULT 'active'                            |
+| `total_referrals`    | INT         | DEFAULT 0                                   |
+| `bonus_points`       | INT         | DEFAULT 0                                   |
+| `free_package_claimed`| DATE       | NULL                                        |
+| `created_at`         | TIMESTAMPTZ | DEFAULT now()                               |
+
+### 2. `products` – available data packages
+
+| Column         | Type          | Constraints            |
+|----------------|---------------|------------------------|
+| `id`           | SERIAL        | PRIMARY KEY            |
+| `name`         | VARCHAR(100)  | NOT NULL               |
+| `provider`     | VARCHAR(50)   | NOT NULL               |
+| `price`        | DECIMAL(10,2) | NOT NULL, CHECK (>0)   |
+| `amount_cents` | INT           | NOT NULL, CHECK (>0)   |
+| `image_url`    | TEXT          | NULL                   |
+
+### 3. `orders` – purchase records
+
+| Column           | Type         | Constraints                                  |
+|------------------|--------------|----------------------------------------------|
+| `id`             | UUID         | PRIMARY KEY                                  |
+| `order_number`   | VARCHAR(20)  | NOT NULL, UNIQUE                             |
+| `customer_id`    | UUID         | NULL, REFERENCES `customers(id)`             |
+| `customer_phone` | VARCHAR(20)  | NOT NULL, CHECK (Somali format)              |
+| `product_id`     | INT          | NOT NULL, REFERENCES `products(id)`          |
+| `amount`         | DECIMAL(10,2)| NOT NULL                                     |
+| `promo_code`     | TEXT         | NULL, REFERENCES `customers(promo_code)`     |
+| `status`         | VARCHAR(20)  | DEFAULT 'completed'                          |
+| `created_at`     | TIMESTAMPTZ  | DEFAULT now()                                |
+| `receiver_phone` | VARCHAR(20)  | NULL (for gift orders)                       |
+
+### 4. `transactions` – reward/commission tracking
+
+| Column        | Type         | Constraints                                                      |
+|---------------|--------------|------------------------------------------------------------------|
+| `id`          | UUID         | PRIMARY KEY                                                      |
+| `customer_id` | UUID         | NOT NULL, REFERENCES `customers(id)`                             |
+| `type`        | VARCHAR(20)  | NOT NULL, CHECK (`buyer`,`district`,`group`,`school`,`referral`,`promo`) |
+| `order_id`    | UUID         | NOT NULL, REFERENCES `orders(id)`                                |
+| `created_at`  | TIMESTAMPTZ  | DEFAULT now()                                                    |
+
+### 5. `rewards` – competition winners
+
+| Column             | Type         | Constraints                                  |
+|--------------------|--------------|----------------------------------------------|
+| `id`               | UUID         | PRIMARY KEY                                  |
+| `competition_type` | TEXT         | NOT NULL                                     |
+| `period_year`      | INT          | NOT NULL                                     |
+| `period_month`     | INT          | NULL                                         |
+| `period_week`      | INT          | NULL                                         |
+| `winner_id`        | UUID         | NULL, REFERENCES `customers(id)`             |
+| `winner_name`      | TEXT         | NULL                                         |
+| `winner_value`     | TEXT         | NULL                                         |
+| `total_count`      | BIGINT       | NOT NULL                                     |
+| `awarded_at`       | TIMESTAMPTZ  | DEFAULT now()                                |
+
+### Triggers
+
+- **`trigger_update_total_referrals`** – After a new user inserts with a `referred_by` value, automatically increments the referrer’s `total_referrals`.
+
+---
+
+## 📞 RPC Functions (Stored Procedures)
+
+All RPC functions are created with `SECURITY DEFINER` to bypass RLS where needed.
+
+### Core Functions
+
+| #   | Function Name                       | Purpose                                                           |
+|-----|-------------------------------------|-------------------------------------------------------------------|
+| 1   | `register_customer`                 | Registers a new user, auto‑generates `promo_code` (sequence), `referral_code` (random 6), `group_code` (A–Y cycle). |
+| 2   | `create_order`                      | Creates an order, records transaction, prevents self‑promo code usage, returns USSD code. |
+
+### Leaderboard Functions (Top 5 or Top 3)
+
+| #   | Function Name                       | Returns                                                          |
+|-----|-------------------------------------|------------------------------------------------------------------|
+| 3   | `get_weekly_top_referrers`          | Top 3 referrers of the current week (weekly competition).        |
+| 4   | `get_monthly_top_promoted`          | Top 5 users whose promo code was used most in a given month.     |
+| 5   | `get_monthly_top_seller`            | Top 5 users with most orders in a given month.                   |
+| 6   | `get_top_sellers`                   | Top 5 sellers of all time.                                       |
+| 7   | `get_top_promoted`                  | Top 5 promo codes of all time.                                   |
+| 8   | `get_top_districts`                 | Top 5 districts by number of orders.                             |
+| 9   | `get_top_groups`                    | Top 5 groups (`group_code`) by orders.                           |
+| 10  | `get_top_schools`                   | Top 5 schools by orders.                                         |
+
+### Statistics Functions
+
+| #   | Function Name                       | Returns                                                          |
+|-----|-------------------------------------|------------------------------------------------------------------|
+| 11  | `get_total_users`                   | Total number of customers.                                       |
+| 12  | `get_total_orders`                  | Total number of orders.                                          |
+| 13  | `get_total_transactions`            | Total number of transactions.                                    |
+| 14  | `get_total_referrals_sum`           | Sum of all `total_referrals`.                                    |
+| 15  | `get_total_districts`               | Number of distinct districts.                                    |
+| 16  | `get_total_groups`                  | Number of distinct group codes.                                  |
+| 17  | `get_total_schools`                 | Number of distinct schools.                                      |
+
+### Award Functions (Reward Distribution)
+
+| #   | Function Name                       | Reward                                                           |
+|-----|-------------------------------------|------------------------------------------------------------------|
+| 18  | `award_weekly_top_referrer`         | +100 points + free package + certificate to weekly top referrer. |
+| 19  | `award_monthly_promoted`            | +100 points + free package + certificate to monthly top promoted.|
+| 20  | `award_monthly_top_seller`          | +100 points to monthly top seller.                               |
+| 21  | `award_annual_top_district`         | Trophy to district with most orders in the year.                 |
+| 22  | `award_annual_top_group`            | Trophy to group with most orders in the year.                    |
+| 23  | `award_annual_top_school`           | Trophy to school with most orders in the year.                   |
+
+---
+
+## 🖥 Frontend Structure
+
+The frontend is a **single‑page application** (SPA) with additional static pages. All pages share a consistent glassmorphism design and are mobile‑responsive.
+
+### Main Pages
+
+| File                  | Description                                                                 |
+|-----------------------|-----------------------------------------------------------------------------|
+| `index.html`          | Home page with live order feed (Home tab) and Buyer 5‑step wizard (Buyer tab). |
+| `login.html`          | Login page – supports **email** or **promo code** + password.               |
+| `register.html`       | Registration form – uses `register_customer` RPC.                          |
+| `dashboard.html`      | User dashboard – shows referrals, bonus points, personal info.             |
+| `admin.html`          | Admin panel – manage orders and products (restricted to `is_admin` users). |
+| `leaderboard.html`    | Public leaderboards (weekly referrers, monthly sellers, districts, etc.).  |
+| `rewards.html`        | History of winners from `rewards` table.                                   |
+| `order-history.html`  | User’s past orders.                                                        |
+| `referrals.html`      | List of users referred by the logged‑in user.                              |
+| `notifications.html`  | User notifications (sample).                                               |
+| `edit-profile.html`   | Edit profile (full_name, phone, email, password).                          |
+| `faq.html`            | Frequently asked questions.                                                |
+| `terms.html`          | Terms of service.                                                          |
+| `privacy.html`        | Privacy policy.                                                            |
+| `policy.html`         | Return/refund policy.                                                      |
+
+### Buyer Wizard (5 Steps)
+
+1. **Provider selection** – Hormuud, Somtel, Somnet, Amtel, SomLink (with logos)
+2. **Service selection** – Internet, call minutes, etc.
+3. **Plan selection** – Display products with price and data/call amount
+4. **Payment method** – EVC Plus, eDahab, Jeeb
+5. **Details** – Sender phone, receiver phone, promo code (optional)
+
+After confirmation, the order is created via `create_order` RPC, and the USSD code is shown. The user’s phone automatically dials the USSD code after 3 seconds.
+
+---
+
+## 🏆 Reward System
+
+| Competition       | Frequency | Winners | Prize                                                                 |
+|-------------------|-----------|---------|-----------------------------------------------------------------------|
+| Most referrals    | Weekly    | 1st     | 100 bonus points + free package + certificate                         |
+| Most promoted (promo code usage) | Monthly | 1st | 100 bonus points + free package + certificate                         |
+| Most seller (orders) | Monthly | 1st | 100 bonus points                                                      |
+| Top district      | Annually  | 1       | Trophy                                                                |
+| Top group         | Annually  | 1       | Trophy                                                                |
+| Top school        | Annually  | 1       | Trophy                                                                |
+
+Winners are stored in the `rewards` table via the respective `award_...` RPC functions.
+
+---
+
+## 🚢 Deployment
+
+The project is deployed on **GitHub Pages**:
+
+- **Live URL**: [https://sahandata.github.io/Sahan/](https://sahandata.github.io/Sahan/)
+- **Repository**: [https://github.com/sahandata/Sahan](https://github.com/sahandata/Sahan)
+
+To deploy your own instance:
+
+1. Clone the repository.
+2. Update `SUPABASE_URL` and `SUPABASE_ANON_KEY` in all HTML files (search for `YOUR_PROJECT` placeholders).
+3. Run the provided SQL scripts (schema, RPC functions, triggers) in your Supabase SQL Editor.
+4. Push to a GitHub repository and enable GitHub Pages in the repository settings (branch `main`, root folder).
+
+---
+
+## 🔮 Future Improvements
+
+| Priority | Feature                         | Description                                                                 |
+|----------|---------------------------------|-----------------------------------------------------------------------------|
+| High     | Auto‑provisioning via webhook   | Automatically deliver data package after payment using mobile operator API. |
+| High     | Cron jobs for automatic awards  | Schedule award functions to run weekly/monthly/yearly without manual trigger. |
+| Medium   | PWA / Mobile App                | Convert to Progressive Web App or build native app with Capacitor.          |
+| Medium   | Push notifications              | Notify users when they receive rewards or a referral is made.               |
+| Medium   | Admin analytics dashboard       | Charts and statistics for orders, referrals, and competition performance.   |
+| Low      | Wallet / Balance system         | Allow users to pre‑load balance and pay directly from wallet.               |
+
+---
+
+## 📄 License
+
+This project is proprietary and intended for internal use only. All rights reserved.
+
+---
+
+**Built with ❤️ for the Somali market – empowering data access through rewards.**
