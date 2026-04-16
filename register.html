@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA - Register</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { background: linear-gradient(145deg, #3d9ce0 0%, #73c2f0 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 2rem; }
+        .card { background: white; max-width: 550px; width: 100%; border-radius: 2rem; padding: 2rem; box-shadow: 0 20px 35px rgba(0,0,0,0.1); }
+        .card h1 { color: #b45f06; text-align: center; }
+        .card p { text-align: center; color: #a0522d; margin-bottom: 1rem; }
+        .input-group { margin-bottom: 0.8rem; }
+        .input-group label { font-size: 0.7rem; font-weight: 600; color: #5a3e1b; display: block; }
+        .input-group input { width: 100%; padding: 0.6rem 1rem; border-radius: 1.5rem; border: 1px solid #e0b354; background: rgba(255,255,240,0.9); }
+        .row { display: flex; gap: 1rem; }
+        .row .input-group { flex: 1; }
+        .btn { width: 100%; background: #e69500; color: white; border: none; border-radius: 2rem; padding: 0.7rem; font-weight: bold; cursor: pointer; margin-top: 1rem; }
+        .message { margin: 1rem 0; padding: 0.5rem; border-radius: 1rem; font-size: 0.8rem; display: none; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; visibility: hidden; }
+        .modal-content { background: #FFE5B4; border-radius: 2rem; padding: 2rem; max-width: 400px; width: 90%; text-align: center; }
+        .modal-content h3 { color: #b45f06; margin-bottom: 1rem; }
+        .code-box { background: white; padding: 0.5rem; border-radius: 1rem; margin: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; }
+        .copy-btn { background: #e69500; border: none; border-radius: 1rem; padding: 0.2rem 0.8rem; color: white; cursor: pointer; }
+        .footer-links { text-align: center; margin-top: 1rem; font-size: 0.7rem; }
+        .footer-links a { color: #b45f06; text-decoration: none; margin: 0 0.5rem; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>⭐ SAHAN DATA ⭐</h1>
+    <p>ku soo biir xidigaha suuq-geynta</p>
+    <div id="msg" class="message"></div>
+    <div class="row"><div class="input-group"><label>📛 Full name</label><input id="fullName" placeholder="Ahmed Ali"></div><div class="input-group"><label>📞 Phone</label><input id="phone" placeholder="612345678"></div></div>
+    <div class="input-group"><label>📧 Email</label><input id="email" placeholder="example@domain.com"></div>
+    <div class="row"><div class="input-group"><label>🏘️ District</label><input id="district" placeholder="Hodan"></div><div class="input-group"><label>🏫 School</label><input id="school" placeholder="Banadir High"></div></div>
+    <div class="row"><div class="input-group"><label>🔒 Password</label><input id="password" type="password" placeholder="••••••"></div><div class="input-group"><label>👥 Group Code</label><input id="groupCode" readonly placeholder="Auto"></div></div>
+    <div class="input-group"><label>🔗 Referral code (from friend's link)</label><input id="refCode" readonly placeholder="Auto from URL"></div>
+    <button class="btn" id="registerBtn">✨ Register</button>
+    <div class="footer-links"><a href="login.html">Login</a> | <a href="index.html">Home</a></div>
+</div>
+<div id="successModal" class="modal">
+    <div class="modal-content"><h3>✅ Registration Successful!</h3><div id="modalContent"></div><button onclick="closeModal()" class="btn" style="margin-top:1rem;">Close</button></div>
+</div>
+<script>
+    const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const urlParams = new URLSearchParams(window.location.search);
+    const refFromUrl = urlParams.get('ref');
+    if(refFromUrl) document.getElementById('refCode').value = refFromUrl;
+    async function fetchGroupCode() { const { data } = await sb.rpc('get_next_group_code'); document.getElementById('groupCode').value = data || 'A'; }
+    fetchGroupCode();
+    function showMsg(m, isErr) { const d = document.getElementById('msg'); d.style.display='block'; d.style.background=isErr?'#fee2e2':'#d4edda'; d.style.color=isErr?'#b91c1c':'#155724'; d.innerHTML=isErr?`❌ ${m}`:`✅ ${m}`; setTimeout(()=>d.style.display='none',4000); }
+    async function register() {
+        const full = document.getElementById('fullName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const district = document.getElementById('district').value.trim();
+        const school = document.getElementById('school').value.trim();
+        const pwd = document.getElementById('password').value;
+        const ref = document.getElementById('refCode').value.trim();
+        if(!full||!phone||!email||!district||!school||!pwd) return showMsg('Fadlan buuxi dhammaan goobaha', true);
+        if(!/^\d{7,9}$/.test(phone)) return showMsg('Phone number must be 7-9 digits', true);
+        if(pwd.length<6) return showMsg('Password min 6 characters', true);
+        const btn = document.getElementById('registerBtn'); btn.disabled=true; btn.innerText='Processing...';
+        const { data: auth, error: authErr } = await sb.auth.signUp({ email, password: pwd });
+        if(authErr) { showMsg(authErr.message, true); btn.disabled=false; btn.innerText='✨ Register'; return; }
+        const uid = auth.user.id;
+        const { data: cust, error: rpcErr } = await sb.rpc('register_customer', {
+            p_uid: uid, p_full_name: full, p_phone_number: phone, p_email: email,
+            p_district: district, p_school: school, p_referred_by: ref || null
+        });
+        if(rpcErr) { showMsg(rpcErr.message, true); btn.disabled=false; btn.innerText='✨ Register'; return; }
+        const promo = cust?.promo_code || 'N/A';
+        const referral = cust?.referral_code || 'N/A';
+        const shareLink = `${window.location.origin}/register.html?ref=${referral}`;
+        document.getElementById('modalContent').innerHTML = `
+            <div class="code-box"><span><strong>Referral Code:</strong> ${referral}</span><button class="copy-btn" onclick="copyText('${referral}')">Copy</button></div>
+            <div class="code-box"><span><strong>Referral Link:</strong> ${shareLink}</span><button class="copy-btn" onclick="copyText('${shareLink}')">Copy</button></div>
+            <div class="code-box"><span><strong>Promo Code:</strong> ${promo}</span><button class="copy-btn" onclick="copyText('${promo}')">Copy</button></div>
+        `;
+        document.getElementById('successModal').style.visibility = 'visible';
+        btn.disabled=false; btn.innerText='✨ Register';
+    }
+    window.copyText = (t) => { navigator.clipboard.writeText(t); alert('Copied!'); };
+    window.closeModal = () => { document.getElementById('successModal').style.visibility = 'hidden'; window.location.href = 'login.html'; };
+    document.getElementById('registerBtn').onclick = register;
+</script>
+</body>
+</html>

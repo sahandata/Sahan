@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA - Iibso Data & Airtime</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { background: radial-gradient(circle at 10% 20%, rgba(61,156,224,0.9), rgba(44,82,130,0.95)); min-height: 100vh; padding: 1rem; }
+        .glass { max-width: 900px; margin: 0 auto; background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border-radius: 2rem; padding: 1rem; }
+        .header { text-align: center; margin-bottom: 1rem; }
+        .header h1 { font-size: 1.8rem; background: linear-gradient(135deg,#FFF,#FFD966); -webkit-background-clip:text; background-clip:text; color:transparent; }
+        .step-indicator { display: flex; justify-content: center; gap: 0.8rem; margin-bottom: 1.5rem; }
+        .step { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
+        .step.active { background: #f59e0b; color: #1e3c72; box-shadow: 0 0 10px rgba(245,158,11,0.5); }
+        .step-content { background: rgba(255,255,255,0.95); border-radius: 2rem; padding: 1.5rem; display: none; animation: fade 0.3s; }
+        .step-content.active { display: block; }
+        @keyframes fade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .two-col-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1rem; margin: 1rem 0; }
+        .company-card, .service-item, .plan-item, .payment-item { background: rgba(248,249,250,0.9); border-radius: 1.2rem; padding: 1rem; text-align: center; cursor: pointer; border: 2px solid transparent; position: relative; }
+        .company-card.selected, .service-item.selected, .plan-item.selected, .payment-item.selected { border-color: #f59e0b; background: #fff3e0; }
+        .company-logo { width: 70px; height: 70px; margin: 0 auto 0.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; color: white; background: currentColor; }
+        .selected-ring { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; background: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; display: none; }
+        .company-card.selected .selected-ring, .service-item.selected .selected-ring, .plan-item.selected .selected-ring, .payment-item.selected .selected-ring { display: flex; }
+        .plan-price { font-weight: bold; color: #28a745; margin-top: 0.3rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; font-weight: 600; margin-bottom: 0.3rem; color: #1e3c72; }
+        .input-group input { width: 100%; padding: 0.8rem; border-radius: 1.2rem; border: 1px solid #ccc; }
+        .btn { width: 100%; padding: 0.8rem; border-radius: 3rem; font-size: 1rem; font-weight: bold; border: none; cursor: pointer; margin-top: 0.5rem; }
+        .btn-primary { background: linear-gradient(135deg, #f59e0b, #e67e22); color: white; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-back { background: rgba(0,0,0,0.2); color: #1e3c72; }
+        .nav-buttons { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .total-box { background: #e8f0fe; padding: 0.8rem; border-radius: 1.2rem; text-align: center; font-weight: bold; margin: 1rem 0; }
+        .message { margin-top: 1rem; padding: 0.8rem; border-radius: 1rem; text-align: center; display: none; }
+        .message.success { background: #d4edda; color: #155724; display: block; }
+        .message.error { background: #f8d7da; color: #721c24; display: block; }
+        .message.info { background: #d1ecf1; color: #0c5460; display: block; }
+        .bottom-nav { display: flex; justify-content: space-around; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); border-radius: 2rem; padding: 0.5rem; margin-top: 1rem; }
+        .nav-item { flex: 1; text-align: center; padding: 0.5rem; color: white; font-size: 0.8rem; cursor: pointer; text-decoration: none; display: block; border-radius: 2rem; }
+        .nav-item i { font-size: 1.2rem; display: block; margin-bottom: 0.2rem; }
+        @media (max-width: 640px) { .two-col-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="glass">
+    <div class="header">
+        <h1><i class="fas fa-shopping-cart"></i> Iibso Data & Airtime</h1>
+        <p style="color:#ffd966;">5 Tallaabo oo fudud</p>
+    </div>
+
+    <div class="step-indicator">
+        <div class="step active" data-step="1">1</div><div class="step" data-step="2">2</div>
+        <div class="step" data-step="3">3</div><div class="step" data-step="4">4</div><div class="step" data-step="5">5</div>
+    </div>
+
+    <!-- Step 1 -->
+    <div id="step1" class="step-content active">
+        <div class="two-col-grid" id="companyGrid"></div>
+        <button class="btn btn-primary" id="nextStep1" disabled>Next →</button>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="step2" class="step-content">
+        <div id="serviceList" class="two-col-grid"></div>
+        <div class="nav-buttons"><button class="btn btn-back" id="backStep2">← Back</button><button class="btn btn-primary" id="nextStep2" disabled>Next →</button></div>
+    </div>
+
+    <!-- Step 3 -->
+    <div id="step3" class="step-content">
+        <div id="planList" class="two-col-grid"></div>
+        <div class="nav-buttons"><button class="btn btn-back" id="backStep3">← Back</button><button class="btn btn-primary" id="nextStep3" disabled>Next →</button></div>
+    </div>
+
+    <!-- Step 4 -->
+    <div id="step4" class="step-content">
+        <div class="two-col-grid">
+            <div class="payment-item" data-payment="evc"><strong>💵 EVC Plus</strong><br><span>Hormuud</span><div class="selected-ring">✓</div></div>
+            <div class="payment-item" data-payment="edahab"><strong>💎 eDahab</strong><br><span>Somtel</span><div class="selected-ring">✓</div></div>
+            <div class="payment-item" data-payment="jeeb"><strong>📱 Jeeb</strong><br><span>Somnet</span><div class="selected-ring">✓</div></div>
+        </div>
+        <div class="total-box" id="paymentTotal">💰 Total: $0.00</div>
+        <div class="nav-buttons"><button class="btn btn-back" id="backStep4">← Back</button><button class="btn btn-primary" id="nextStep4" disabled>Next →</button></div>
+    </div>
+
+    <!-- Step 5 -->
+    <div id="step5" class="step-content">
+        <div id="selectedPlanInfo" style="background:#e8f0fe; padding:1rem; border-radius:1.2rem; margin-bottom:1rem;"></div>
+        <div class="input-group"><label>📞 Lambarka diraya (EVC/eDahab) *</label><input type="tel" id="senderPhone" placeholder="612345678"></div>
+        <div class="input-group"><label>📱 Lambarka helaya (data) *</label><input type="tel" id="receiverPhone" placeholder="612345678"></div>
+        <div class="input-group"><label>🎯 Promo Code (saaxiib)</label><input type="text" id="promoCode" placeholder="tusaale: 86"></div>
+        <div class="total-box" id="finalTotal">💰 Total: $0.00</div>
+        <button class="btn btn-primary" id="confirmOrderBtn">💳 Confirm & Pay</button>
+        <button class="btn btn-back" id="backStep5">← Back</button>
+        <div id="paymentMessage" class="message"></div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="buyer.html" class="nav-item active"><i class="fas fa-shopping-cart"></i><span>Buyer</span></a>
+        <a href="login.html" class="nav-item"><i class="fas fa-sign-in-alt"></i><span>Login</span></a>
+        <a href="register.html" class="nav-item"><i class="fas fa-user-plus"></i><span>Register</span></a>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://your-project.supabase.co';   // ★ BEDEL ★
+    const SUPABASE_ANON_KEY = 'your-anon-key';                // ★ BEDEL ★
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let currentUser = null;
+    let selectedCompany = null, selectedService = null, selectedPlan = null, selectedPayment = null;
+    let currentCompanyColor = "#f59e0b";
+
+    // Companies, services, plans (same as before)
+    const companies = [
+        { id: "hormuud", name: "Hormuud", color: "#2e7d32", logoChar: "H", column: "left" },
+        { id: "somtel", name: "Somtel", color: "#fbc02d", logoChar: "S", column: "right", textColor: "#000" },
+        { id: "somnet", name: "Somnet", color: "#1976d2", logoChar: "S", column: "left" },
+        { id: "amtel", name: "Amtel", color: "#d32f2f", logoChar: "A", column: "right" },
+        { id: "somlink", name: "SomLink", color: "#b85c1a", logoChar: "🧲", column: "left" }
+    ];
+    const servicesData = {
+        hormuud: ["Unlimited Data","Anfac Plus GB","Anfac","ADSL PLUS","Recharge Voice","Hormuud Voice"],
+        somtel: ["Dhameeys Unlimited","Abaal GB","Kaar","Muraadso"],
+        somnet: ["Kaafi 829","Kaafi Unlimited","Kaafi Voice","Maqsuud GB","Qanciye Call+GB"],
+        amtel: ["Bulaal Unlimited","Tanaad GB"],
+        somlink: ["Unlimited Data (SomLink)","Kaafiye GB"]
+    };
+    const plansData = {
+        "Unlimited Data": [{ name:"Daily Unlimited", price:0.70, amount_cents:70, period:"24 Hrs" },{ name:"Weekly Unlimited", price:5.00, amount_cents:500, period:"7 Days" },{ name:"Monthly Unlimited", price:17.50, amount_cents:1750, period:"30 Days" }],
+        "Anfac Plus GB": [{ name:"400MB + 10min", price:0.23, amount_cents:23, period:"24 Hrs" },{ name:"2GB + 80min", price:0.90, amount_cents:90, period:"15 Days" },{ name:"5GB + 160min", price:1.78, amount_cents:178, period:"30 Days" }],
+        "Anfac": [{ name:"8 min", price:0.09, amount_cents:9, period:"30 Days" },{ name:"40 min", price:0.45, amount_cents:45, period:"30 Days" },{ name:"80 min", price:0.89, amount_cents:89, period:"30 Days" }],
+        "ADSL PLUS": [{ name:"ADSL 200min", price:22.00, amount_cents:2200, period:"30 Days" },{ name:"ADSL 400min", price:43.60, amount_cents:4360, period:"30 Days" }],
+        "Recharge Voice": [{ name:"Recharge Voice", price:1.00, amount_cents:100, period:"30 Days" }],
+        "Hormuud Voice": [{ name:"Hormuud Voice", price:0.43, amount_cents:43, period:"24 Hrs" }],
+        "Dhameeys Unlimited": [{ name:"6 Hrs", price:0.18, amount_cents:18, period:"6 Hrs" },{ name:"24 Hrs", price:0.60, amount_cents:60, period:"24 Hrs" },{ name:"30 Days", price:15.00, amount_cents:1500, period:"30 Days" }],
+        "Abaal GB": [{ name:"425MB + 12min", price:0.23, amount_cents:23, period:"No Expiry" },{ name:"1.2GB + 35min", price:0.46, amount_cents:46, period:"No Expiry" }],
+        "Kaar": [{ name:"$1 Airtime", price:0.90, amount_cents:90, period:"30 Days" },{ name:"$5 Airtime", price:4.40, amount_cents:440, period:"30 Days" }],
+        "Muraadso": [{ name:"Daily Social", price:0.22, amount_cents:22, period:"24 Hrs" },{ name:"30 Days Social", price:4.50, amount_cents:450, period:"30 Days" }],
+        "Kaafi 829": [{ name:"6 Hrs", price:0.18, amount_cents:18, period:"6 Hrs" },{ name:"12 Hrs", price:0.30, amount_cents:30, period:"12 Hrs" }],
+        "Kaafi Unlimited": [{ name:"24 Hrs", price:0.60, amount_cents:60, period:"24 Hrs" },{ name:"30 Days", price:15.00, amount_cents:1500, period:"30 Days" }],
+        "Kaafi Voice": [{ name:"24 Hrs Voice", price:0.19, amount_cents:19, period:"24 Hrs" },{ name:"30 Days Voice", price:4.50, amount_cents:450, period:"30 Days" }],
+        "Maqsuud GB": [{ name:"425MB", price:0.25, amount_cents:25, period:"No Expiry" },{ name:"1.2GB", price:0.44, amount_cents:44, period:"No Expiry" }],
+        "Qanciye Call+GB": [{ name:"1.2GB + 35min", price:0.45, amount_cents:45, period:"No Expiry" },{ name:"2.5GB + 92min", price:0.90, amount_cents:90, period:"No Expiry" }],
+        "Bulaal Unlimited": [{ name:"3 Days", price:0.92, amount_cents:92, period:"3 Days" },{ name:"30 Days", price:9.00, amount_cents:900, period:"30 Days" }],
+        "Tanaad GB": [{ name:"2GB + 600min", price:0.45, amount_cents:45, period:"7 Days" },{ name:"25GB + Unlimited Calls", price:4.50, amount_cents:450, period:"30 Days" }],
+        "Unlimited Data (SomLink)": [{ name:"24 Hrs", price:0.45, amount_cents:45, period:"24 Hrs" },{ name:"30 Days", price:13.50, amount_cents:1350, period:"30 Days" }],
+        "Kaafiye GB": [{ name:"2GB", price:0.44, amount_cents:44, period:"30 Days" },{ name:"6GB", price:0.89, amount_cents:89, period:"30 Days" }]
+    };
+    const ussdConfig = { evc: { prefix:"*712*", number:"612538844", suffix:"#" }, edahab: { prefix:"*712*", number:"622538844", suffix:"#" }, jeeb: { prefix:"*812*", number:"682118366", suffix:"#" } };
+
+    // DOM elements
+    const companyGrid = document.getElementById('companyGrid');
+    const serviceListDiv = document.getElementById('serviceList');
+    const planListDiv = document.getElementById('planList');
+    const nextStep1 = document.getElementById('nextStep1');
+    const nextStep2 = document.getElementById('nextStep2');
+    const nextStep3 = document.getElementById('nextStep3');
+    const nextStep4 = document.getElementById('nextStep4');
+    const backStep2 = document.getElementById('backStep2');
+    const backStep3 = document.getElementById('backStep3');
+    const backStep4 = document.getElementById('backStep4');
+    const backStep5 = document.getElementById('backStep5');
+    const confirmBtn = document.getElementById('confirmOrderBtn');
+    const paymentTotal = document.getElementById('paymentTotal');
+    const finalTotal = document.getElementById('finalTotal');
+    const orderSummary = document.getElementById('selectedPlanInfo');
+    const msgDiv = document.getElementById('paymentMessage');
+    const senderPhone = document.getElementById('senderPhone');
+    const receiverPhone = document.getElementById('receiverPhone');
+    const promoCode = document.getElementById('promoCode');
+
+    function showStep(step) {
+        document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step${step}`).classList.add('active');
+        document.querySelectorAll('.step').forEach((el,i) => { if(i+1===step) el.classList.add('active'); else el.classList.remove('active'); });
+    }
+
+    function createCompanyCard(comp) {
+        const card = document.createElement('div'); card.className = 'company-card';
+        const logo = document.createElement('div'); logo.className = 'company-logo'; logo.style.backgroundColor = comp.color; logo.style.color = comp.textColor||'white'; logo.textContent = comp.logoChar;
+        const name = document.createElement('div'); name.textContent = comp.name;
+        const ring = document.createElement('div'); ring.className = 'selected-ring'; ring.innerHTML = '✓';
+        card.appendChild(logo); card.appendChild(name); card.appendChild(ring);
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.company-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedCompany = comp.id;
+            currentCompanyColor = comp.color;
+            nextStep1.disabled = false;
+            nextStep1.style.background = `linear-gradient(135deg, ${comp.color}, ${comp.color}dd)`;
+        });
+        return card;
+    }
+
+    function renderCompanies() {
+        companyGrid.innerHTML = '';
+        const left = companies.filter(c => c.column === 'left');
+        const right = companies.filter(c => c.column === 'right');
+        const max = Math.max(left.length, right.length);
+        for(let i=0; i<max; i++) {
+            if(i<left.length) companyGrid.appendChild(createCompanyCard(left[i]));
+            else { const empty = document.createElement('div'); empty.style.visibility='hidden'; empty.style.minHeight='90px'; companyGrid.appendChild(empty); }
+            if(i<right.length) companyGrid.appendChild(createCompanyCard(right[i]));
+            else { const empty = document.createElement('div'); empty.style.visibility='hidden'; empty.style.minHeight='90px'; companyGrid.appendChild(empty); }
+        }
+    }
+
+    function loadServices() {
+        const services = servicesData[selectedCompany] || [];
+        serviceListDiv.innerHTML = '';
+        services.forEach(svc => {
+            const div = document.createElement('div'); div.className = 'service-item'; div.textContent = svc;
+            const ring = document.createElement('div'); ring.className = 'selected-ring'; ring.innerHTML = '✓'; div.appendChild(ring);
+            div.addEventListener('click', () => {
+                document.querySelectorAll('.service-item').forEach(s => s.classList.remove('selected'));
+                div.classList.add('selected');
+                selectedService = svc;
+                nextStep2.disabled = false;
+                nextStep2.style.background = `linear-gradient(135deg, ${currentCompanyColor}, ${currentCompanyColor}dd)`;
+            });
+            serviceListDiv.appendChild(div);
+        });
+        nextStep2.disabled = true; selectedService = null;
+    }
+
+    function loadPlans() {
+        const plans = plansData[selectedService] || [];
+        planListDiv.innerHTML = '';
+        plans.forEach(p => {
+            const div = document.createElement('div'); div.className = 'plan-item';
+            div.innerHTML = `<div><strong>${p.name}</strong><br><span style="font-size:0.7rem;">${p.period}</span></div><div class="plan-price">$${p.price}</div>`;
+            const ring = document.createElement('div'); ring.className = 'selected-ring'; ring.innerHTML = '✓'; div.appendChild(ring);
+            div.addEventListener('click', () => {
+                document.querySelectorAll('.plan-item').forEach(pl => pl.classList.remove('selected'));
+                div.classList.add('selected');
+                selectedPlan = p;
+                paymentTotal.innerText = `💰 Total: $${p.price.toFixed(2)}`;
+                finalTotal.innerText = `💰 Total: $${p.price.toFixed(2)}`;
+                nextStep3.disabled = false;
+                nextStep3.style.background = `linear-gradient(135deg, ${currentCompanyColor}, ${currentCompanyColor}dd)`;
+            });
+            planListDiv.appendChild(div);
+        });
+        nextStep3.disabled = true; selectedPlan = null;
+    }
+
+    // Payment selection
+    document.querySelectorAll('.payment-item').forEach(el => {
+        el.addEventListener('click', () => {
+            document.querySelectorAll('.payment-item').forEach(p => p.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedPayment = el.dataset.payment;
+            nextStep4.disabled = false;
+            nextStep4.style.background = `linear-gradient(135deg, ${currentCompanyColor}, ${currentCompanyColor}dd)`;
+        });
+    });
+
+    function validatePhones() {
+        const sender = senderPhone.value.trim();
+        const receiver = receiverPhone.value.trim();
+        const regex = /^(\+252|0)?(61|62|63|68|69)[0-9]{7}$/;
+        if(!regex.test(sender)) { alert('Lambar diraya khaldan (eg 612345678)'); return false; }
+        if(receiver && !regex.test(receiver)) { alert('Lambar helaya khaldan'); return false; }
+        return true;
+    }
+
+    function updateSummary() {
+        const provider = companies.find(c=>c.id===selectedCompany)?.name;
+        orderSummary.innerHTML = `<strong>${selectedPlan.name}</strong><br>Shirkada: ${provider}<br>Qiimaha: $${selectedPlan.price}<br>Muddada: ${selectedPlan.period}<br>Lambar diraya: ${senderPhone.value.trim()}<br>Lambar helaya: ${receiverPhone.value.trim() || 'isku mid'}<br>Promo Code: ${promoCode.value.trim() || 'None'}`;
+    }
+
+    async function getCurrentUserId() {
+        const { data: { user } } = await sb.auth.getUser();
+        if(!user) return null;
+        const { data: cust } = await sb.from('customers').select('id').eq('uid', user.id).single();
+        return cust?.id || null;
+    }
+
+    async function getProductId(name, provider) {
+        const { data } = await sb.from('products').select('id').eq('name', name).eq('provider', provider).maybeSingle();
+        return data?.id || null;
+    }
+
+    async function createOrder(sender, receiver, productId, promo, payment) {
+        const custId = await getCurrentUserId();
+        if(!custId) throw new Error('Fadlan soo gal (Login) ka hor iibka');
+        const { data, error } = await sb.rpc('create_order', {
+            p_customer_id: custId,
+            p_product_id: productId,
+            p_sender_phone: sender,
+            p_receiver_phone: receiver,
+            p_promo_code: promo,
+            p_payment_method: payment
+        });
+        if(error) throw error;
+        return data;
+    }
+
+    async function processOrder() {
+        if(!currentUser) { alert('Fadlan soo gal (Login) ka hor intaadan iibsan'); return; }
+        if(!selectedPayment) { alert('Dooro habka bixinta'); return; }
+        if(!selectedPlan) { alert('Dooro plan'); return; }
+        if(!validatePhones()) return;
+        msgDiv.className = 'message info';
+        msgDiv.innerHTML = 'Processing order...';
+        msgDiv.style.display = 'block';
+        try {
+            const provider = companies.find(c=>c.id===selectedCompany)?.name;
+            const prodId = await getProductId(selectedPlan.name, provider);
+            if(!prodId) throw new Error('Product not found in database');
+            const order = await createOrder(senderPhone.value.trim(), receiverPhone.value.trim() || null, prodId, promoCode.value.trim() || null, selectedPayment);
+            if(!order.success) throw new Error(order.error || 'Order failed');
+            const config = ussdConfig[selectedPayment];
+            const ussd = `${config.prefix}${config.number}*${selectedPlan.amount_cents}${config.suffix}`;
+            msgDiv.className = 'message success';
+            msgDiv.innerHTML = `✅ Xogta waa la keydiyay!<br>Order: ${order.order_number}<br>Amount: $${order.amount}<br>USSD: ${ussd}<br><span id="countdown">Dialing in 3s...</span>`;
+            let count=3; const intv = setInterval(() => { count--; const sp=document.getElementById('countdown'); if(sp) sp.innerText = `Dialing in ${count}s...`; if(count<=0){ clearInterval(intv); window.location.href=`tel:${ussd}`; } },1000);
+            setTimeout(() => { selectedCompany=null; selectedService=null; selectedPlan=null; selectedPayment=null; document.querySelectorAll('.company-card, .service-item, .plan-item, .payment-item').forEach(el=>el.classList.remove('selected')); senderPhone.value=''; receiverPhone.value=''; promoCode.value=''; showStep(1); nextStep1.disabled=true; },5000);
+        } catch(err) { msgDiv.className = 'message error'; msgDiv.innerHTML = `❌ Fashil: ${err.message}`; }
+    }
+
+    nextStep1.onclick = () => { if(selectedCompany) { loadServices(); showStep(2); } };
+    backStep2.onclick = () => showStep(1);
+    nextStep2.onclick = () => { if(selectedService) { loadPlans(); showStep(3); } };
+    backStep3.onclick = () => showStep(2);
+    nextStep3.onclick = () => { if(selectedPlan) { showStep(4); } };
+    backStep4.onclick = () => showStep(3);
+    nextStep4.onclick = () => { if(selectedPayment) { showStep(5); updateSummary(); } };
+    backStep5.onclick = () => showStep(4);
+    confirmBtn.onclick = processOrder;
+
+    renderCompanies();
+
+    // Check login status
+    sb.auth.getSession().then(({ data: { session } }) => { if(session) currentUser = session.user; });
+</script>
+</body>
+</html>
