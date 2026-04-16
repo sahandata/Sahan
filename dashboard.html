@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { background: linear-gradient(145deg, #3d9ce0 0%, #73c2f0 100%); min-height: 100vh; padding: 2rem 1rem; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        /* Nav tabs (same as index) */
+        .nav-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 2rem; }
+        .nav-tabs a { background: white; color: #1e3c72; text-decoration: none; padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 600; transition: 0.2s; }
+        .nav-tabs a:hover { background: #ffd966; }
+        /* Cards */
+        .card { background: white; border-radius: 1.5rem; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+        .card h3 { color: #b45f06; border-bottom: 2px solid #ffd966; padding-bottom: 0.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .info-row { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid #f0e0c0; flex-wrap: wrap; }
+        .info-label { font-weight: bold; color: #5a3e1b; width: 40%; }
+        .info-value { width: 60%; color: #2c2b28; }
+        .badge { background: #ffd966; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; font-weight: bold; color: #1e3c72; display: inline-block; }
+        .copy-btn { background: #e69500; border: none; border-radius: 1rem; padding: 0.2rem 0.6rem; color: white; cursor: pointer; font-size: 0.7rem; margin-left: 0.5rem; }
+        .logout-btn { background: #e69500; border: none; border-radius: 2rem; padding: 0.6rem 1.5rem; color: white; cursor: pointer; font-size: 0.9rem; margin-top: 1rem; }
+        .text-center { text-align: center; }
+        .error-msg { background: #fee2e2; color: #b91c1c; padding: 1rem; border-radius: 1rem; margin: 1rem 0; }
+        @media (max-width: 700px) { .info-label, .info-value { width: 100%; } .info-value { margin-top: 0.2rem; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Navigation tabs (all pages) -->
+    <div class="nav-tabs">
+        <a href="index.html">Home</a> <a href="login.html">Login</a> <a href="register.html">Register</a>
+        <a href="dashboard.html">Dashboard</a> <a href="admin.html">Admin</a> <a href="leaderboard.html">Leaderboard</a>
+        <a href="rewards.html">Rewards</a> <a href="buyer.html">Buy</a> <a href="edit-profile.html">Edit Profile</a>
+        <a href="order-history.html">Order History</a> <a href="referrals.html">Referrals</a>
+        <a href="notifications.html">Notifications</a> <a href="privacy.html">Privacy</a> <a href="terms.html">Terms</a>
+        <a href="faq.html">FAQ</a> <a href="policy.html">Policy</a>
+    </div>
+
+    <div id="dashboardContent" class="loading">Loading your dashboard...</div>
+
+    <div class="text-center">
+        <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+</div>
+
+<script>
+    // ==================== SUPABASE CONFIG ====================
+    const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+    let customerData = null;
+
+    // Helper RPC caller
+    async function callRpc(func, params = {}) {
+        try {
+            const { data, error } = await sb.rpc(func, params);
+            if (error) throw new Error(error.message);
+            return data;
+        } catch (e) {
+            console.warn(`RPC ${func} failed:`, e.message);
+            return null;
+        }
+    }
+
+    // Check session and redirect if not logged in
+    async function checkSession() {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+            window.location.href = 'login.html';
+            return null;
+        }
+        currentUser = session.user;
+        return currentUser;
+    }
+
+    // Fetch customer data using RPC (bypass RLS)
+    async function fetchCustomer() {
+        const data = await callRpc('get_customer_by_uid', { p_uid: currentUser.id });
+        if (data && data.length > 0) return data[0];
+        return null;
+    }
+
+    // Fetch all user orders (for total spent and list)
+    async function fetchAllOrders(customerId) {
+        const { data, error } = await sb
+            .from('orders')
+            .select('order_number, amount, created_at')
+            .eq('customer_id', customerId)
+            .order('created_at', { ascending: false });
+        if (error) return [];
+        return data || [];
+    }
+
+    // Fetch transactions (bonus points history) – optional
+    async function fetchTransactions(customerId) {
+        const { data, error } = await sb
+            .from('transactions')
+            .select('*')
+            .eq('customer_id', customerId)
+            .order('created_at', { ascending: false })
+            .limit(10);
+        if (error) return [];
+        return data || [];
+    }
+
+    // Rankings
+    async function fetchRankings() {
+        const overall = await callRpc('get_user_rank_overall', { p_customer_id: customerData.id });
+        const district = await callRpc('get_user_rank_district', { p_customer_id: customerData.id, p_district: customerData.district });
+        const group = await callRpc('get_user_rank_group', { p_customer_id: customerData.id, p_group_code: customerData.group_code });
+        const school = await callRpc('get_user_rank_school', { p_customer_id: customerData.id, p_school: customerData.school });
+        return { overall, district, group, school };
+    }
+
+    // Main render
+    async function loadDashboard() {
+        const container = document.getElementById('dashboardContent');
+        try {
+            const user = await checkSession();
+            if (!user) return;
+
+            customerData = await fetchCustomer();
+            if (!customerData) {
+                container.innerHTML = `<div class="error-msg">⚠️ No customer record found. Please complete registration.</div>`;
+                return;
+            }
+
+            // Fetch data
+            const referralCount = await callRpc('get_referrals_count', { p_customer_id: customerData.id }) || 0;
+            const recentOrders = await callRpc('get_recent_orders', { p_customer_id: customerData.id, p_limit: 5 }) || [];
+            const allOrders = await fetchAllOrders(customerData.id);
+            const totalSpent = allOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
+            const totalOrdersCount = allOrders.length;
+            const referralsList = await callRpc('get_referrals_list', { p_customer_id: customerData.id, p_limit: 10 }) || [];
+            const transactions = await fetchTransactions(customerData.id);
+            const rankings = await fetchRankings();
+
+            const shareLink = `${window.location.origin}/register.html?ref=${customerData.referral_code}`;
+            const memberSince = customerData.created_at ? new Date(customerData.created_at).toLocaleDateString() : 'N/A';
+            const freePackageClaimed = customerData.free_package_claimed ? new Date(customerData.free_package_claimed).toLocaleDateString() : 'Not claimed';
+
+            // Build HTML
+            container.innerHTML = `
+                <!-- Personal Info + Rankings Card -->
+                <div class="card">
+                    <h3><i class="fas fa-user"></i> Personal Information & Rankings</h3>
+                    <div class="info-row"><span class="info-label">Full Name:</span><span class="info-value">${escapeHtml(customerData.full_name)}</span></div>
+                    <div class="info-row"><span class="info-label">Phone:</span><span class="info-value">${escapeHtml(customerData.phone_number)}</span></div>
+                    <div class="info-row"><span class="info-label">Email:</span><span class="info-value">${escapeHtml(customerData.email || 'Not provided')}</span></div>
+                    <div class="info-row"><span class="info-label">District:</span><span class="info-value">${escapeHtml(customerData.district)}</span></div>
+                    <div class="info-row"><span class="info-label">School:</span><span class="info-value">${escapeHtml(customerData.school)}</span></div>
+                    <div class="info-row"><span class="info-label">Group Code:</span><span class="info-value"><span class="badge">${escapeHtml(customerData.group_code)}</span></span></div>
+                    <div class="info-row"><span class="info-label">Member Since:</span><span class="info-value">${memberSince}</span></div>
+                    <div class="info-row"><span class="info-label">Account Status:</span><span class="info-value"><span class="badge" style="background:#28a745; color:white;">Active</span></span></div>
+                    <div class="info-row"><span class="info-label">Free Package Claimed:</span><span class="info-value">${freePackageClaimed}</span></div>
+                    <div class="info-row"><span class="info-label">🏆 Overall Rank:</span><span class="info-value">#${rankings.overall || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">🏘️ District Rank:</span><span class="info-value">#${rankings.district || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">👥 Group Rank:</span><span class="info-value">#${rankings.group || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">🏫 School Rank:</span><span class="info-value">#${rankings.school || 'N/A'}</span></div>
+                </div>
+
+                <!-- Rewards & Stats Card -->
+                <div class="card">
+                    <h3><i class="fas fa-chart-line"></i> Rewards & Stats</h3>
+                    <div class="info-row"><span class="info-label">🎁 Bonus Points:</span><span class="info-value"><strong>${customerData.bonus_points || 0}</strong></span></div>
+                    <div class="info-row"><span class="info-label">🔗 Referral Code:</span><span class="info-value"><span class="badge">${escapeHtml(customerData.referral_code)}</span> <button class="copy-btn" onclick="copyToClipboard('${customerData.referral_code}')">Copy</button></span></div>
+                    <div class="info-row"><span class="info-label">🏷️ Promo Code:</span><span class="info-value"><span class="badge">${escapeHtml(customerData.promo_code)}</span></span></div>
+                    <div class="info-row"><span class="info-label">👥 Total Referrals:</span><span class="info-value"><strong>${referralCount}</strong></span></div>
+                    <div class="info-row"><span class="info-label">📦 Total Orders:</span><span class="info-value"><strong>${totalOrdersCount}</strong></span></div>
+                    <div class="info-row"><span class="info-label">💰 Total Spent:</span><span class="info-value"><strong>$${totalSpent.toFixed(2)}</strong></span></div>
+                    <div class="info-row"><span class="info-label">🔗 Share your link:</span><span class="info-value"><button class="copy-btn" onclick="copyToClipboard('${shareLink}')">Copy Link</button></span></div>
+                </div>
+
+                <!-- Recent Orders Card -->
+                <div class="card">
+                    <h3><i class="fas fa-shopping-cart"></i> Recent Orders</h3>
+                    ${recentOrders.length === 0 ? '<p>No orders yet. <a href="buyer.html" style="color:#b45f06;">Buy data now →</a></p>' : recentOrders.map(order => `
+                        <div class="info-row"><span>${escapeHtml(order.order_number)}</span><span>$${order.amount}</span><span>${new Date(order.created_at).toLocaleDateString()}</span></div>
+                    `).join('')}
+                    ${totalOrdersCount > 5 ? `<div class="text-center" style="margin-top:0.5rem;"><a href="order-history.html" style="color:#b45f06;">View all orders →</a></div>` : ''}
+                </div>
+
+                <!-- Transactions (Bonus History) Card -->
+                <div class="card">
+                    <h3><i class="fas fa-history"></i> Bonus Transaction History</h3>
+                    ${transactions.length === 0 ? '<p>No bonus transactions yet.</p>' : transactions.map(tx => `
+                        <div class="info-row"><span>${tx.type}</span><span>${new Date(tx.created_at).toLocaleDateString()}</span><span>Order: ${tx.order_id?.slice(0,8)}</span></div>
+                    `).join('')}
+                </div>
+
+                <!-- People You Referred Card -->
+                <div class="card">
+                    <h3><i class="fas fa-users"></i> People You Referred</h3>
+                    ${referralsList.length === 0 ? '<p>No referrals yet. Share your referral code!</p>' : referralsList.map(ref => `
+                        <div class="info-row"><span>${escapeHtml(ref.full_name)}</span><span>${escapeHtml(ref.phone_number)}</span><span>${new Date(ref.created_at).toLocaleDateString()}</span></div>
+                    `).join('')}
+                    ${referralsList.length >= 10 ? `<div class="text-center" style="margin-top:0.5rem;"><a href="referrals.html" style="color:#b45f06;">View all →</a></div>` : ''}
+                </div>
+            `;
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = `<div class="error-msg">⚠️ Error loading dashboard: ${err.message}</div>`;
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    window.copyToClipboard = function(text) {
+        navigator.clipboard.writeText(text);
+        alert('Copied: ' + text);
+    };
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await sb.auth.signOut();
+        window.location.href = 'login.html';
+    });
+
+    loadDashboard();
+</script>
+</body>
+</html>

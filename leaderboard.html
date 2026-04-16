@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA - Leaderboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { background: linear-gradient(145deg, #3d9ce0 0%, #73c2f0 100%); min-height: 100vh; padding: 2rem 1rem; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .title-section { text-align: center; margin-bottom: 2rem; }
+        .title-section h1 { font-size: 2.5rem; color: white; }
+        .title-section p { color: #ffd966; }
+        .nav-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 2rem; }
+        .nav-tabs a { background: white; color: #1e3c72; text-decoration: none; padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 600; transition: 0.2s; }
+        .nav-tabs a:hover { background: #ffd966; }
+        .leaderboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: white; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .card-header { background: #ffd966; padding: 0.8rem 1.2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .card-header h3 { color: #2c3e66; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; margin: 0; }
+        .filter-group { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .filter-select { background: white; border: 1px solid #e0b354; border-radius: 2rem; padding: 0.3rem 0.6rem; font-size: 0.7rem; cursor: pointer; }
+        .card-body { padding: 1rem; max-height: 420px; overflow-y: auto; }
+        .leader-item { display: block; margin-bottom: 0.8rem; }
+        .leader-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
+        .rank { font-weight: bold; width: 45px; }
+        .name { flex: 1; color: #1e3c72; font-weight: 500; }
+        .count { background: #fff3e0; padding: 0.2rem 0.7rem; border-radius: 1.2rem; font-size: 0.75rem; font-weight: bold; color: #f59e0b; }
+        .progress-bar-container { background: #e9ecef; border-radius: 1rem; height: 6px; width: 100%; margin-top: 0.2rem; overflow: hidden; }
+        .progress-bar-fill { background: #f59e0b; height: 6px; width: 0%; border-radius: 1rem; transition: width 0.3s; }
+        .trophy { font-size: 1.2rem; margin-right: 0.3rem; }
+        .loading { text-align: center; padding: 2rem; color: #718096; }
+        .footer { margin-top: 2rem; background: #ffd966; border-radius: 1rem; padding: 1.5rem 1rem 0.8rem; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; }
+        .footer-section h4 { font-size: 0.9rem; margin-bottom: 0.5rem; color: #2c3e66; }
+        .footer-section ul { list-style: none; }
+        .footer-section li { margin-bottom: 0.3rem; }
+        .footer-section a { font-size: 0.75rem; color: #2c3e66; text-decoration: none; }
+        .footer-section a:hover { text-decoration: underline; }
+        .footer-bottom { text-align: center; font-size: 0.7rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(44,62,102,0.2); }
+        @media (max-width: 800px) { .footer-grid { grid-template-columns: repeat(2,1fr); } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="title-section">
+        <h1>⭐ SAHAN DATA ⭐</h1>
+        <p>Ku soo biir xidigaha suuq-geynta</p>
+    </div>
+    <div class="nav-tabs">
+        <!-- 21 links (same as footer) -->
+        <a href="index.html">Home</a> <a href="login.html">Login</a> <a href="register.html">Register</a>
+        <a href="dashboard.html">Dashboard</a> <a href="admin.html">Admin</a> <a href="leaderboard.html">Leaderboard</a>
+        <a href="rewards.html">Rewards</a> <a href="buyer.html">Buy</a> <a href="edit-profile.html">Edit Profile</a>
+        <a href="order-history.html">Order History</a> <a href="referrals.html">Referrals</a>
+        <a href="notifications.html">Notifications</a> <a href="privacy.html">Privacy</a> <a href="terms.html">Terms</a>
+        <a href="faq.html">FAQ</a> <a href="policy.html">Policy</a>
+        <a href="add-products.html">Add Products</a> <a href="user-dashboard.html">User Dashboard</a>
+        <a href="registration.html">Registration (old)</a> <a href="analysis-admin.html">Analysis Admin</a>
+        <a href="forgot-password.html">Forgot Password</a>
+    </div>
+
+    <div id="leaderboardContainer" class="leaderboard-grid"></div>
+
+    <div class="footer">
+        <div class="footer-grid">
+            <div class="footer-section"><h4>Main</h4><ul><li><a href="index.html">Home</a></li><li><a href="login.html">Login</a></li><li><a href="register.html">Register</a></li><li><a href="dashboard.html">Dashboard</a></li><li><a href="admin.html">Admin</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="rewards.html">Rewards</a></li><li><a href="buyer.html">Buy</a></li><li><a href="edit-profile.html">Edit Profile</a></li></ul></div>
+            <div class="footer-section"><h4>History & Info</h4><ul><li><a href="order-history.html">Order History</a></li><li><a href="referrals.html">Referrals</a></li><li><a href="notifications.html">Notifications</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="terms.html">Terms</a></li><li><a href="faq.html">FAQ</a></li><li><a href="policy.html">Policy</a></li><li><a href="add-products.html">Add Products</a></li></ul></div>
+            <div class="footer-section"><h4>Extra</h4><ul><li><a href="user-dashboard.html">User Dashboard</a></li><li><a href="registration.html">Registration (old)</a></li><li><a href="analysis-admin.html">Analysis Admin</a></li><li><a href="forgot-password.html">Forgot Password</a></li><li><a href="withdrawal-history.html">Withdrawal History</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+            <div class="footer-section"><h4>Contact</h4><div class="contact-links"><a href="https://wa.me/+252612538844" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><br><a href="tel:+252612538844"><i class="fas fa-phone-alt"></i> Tel</a><br><a href="mailto:support@sahandata.com"><i class="fas fa-envelope"></i> Email</a></div></div>
+        </div>
+        <div class="footer-bottom">© 2025 SAHAN DATA – All rights reserved</div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function callRpc(func, params = {}) {
+        try {
+            const { data, error } = await sb.rpc(func, params);
+            if (error) throw error;
+            return data || [];
+        } catch(e) { console.warn(func, e.message); return []; }
+    }
+
+    function renderListWithProgress(containerId, items, nameKey, countKey, limit, countLabel) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        if (!items || items.length === 0) {
+            container.innerHTML = '<div class="loading">No data</div>';
+            return;
+        }
+        const topItems = items.slice(0, limit);
+        const maxCount = topItems.length ? Math.max(...topItems.map(i => i[countKey] || 0)) : 1;
+        container.innerHTML = '';
+        topItems.forEach((item, idx) => {
+            const rank = idx + 1;
+            const isFirst = rank === 1;
+            const trophyHtml = isFirst ? '<span class="trophy">🥇</span> ' : '';
+            const name = item[nameKey] || 'N/A';
+            const count = item[countKey] !== undefined ? item[countKey] : 0;
+            const percent = maxCount > 0 ? (count / maxCount) * 100 : 0;
+            const div = document.createElement('div');
+            div.className = 'leader-item';
+            div.innerHTML = `
+                <div class="leader-row">
+                    <div class="rank">${rank}</div>
+                    <div class="name">${trophyHtml}${escapeHtml(name)}</div>
+                    <div class="count">${count} ${countLabel}</div>
+                </div>
+                <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${percent}%;"></div></div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;': m==='<'?'&lt;':'&gt;'); }
+
+    const timeFilters = [
+        { value: 'all', label: 'All Time' },
+        { value: 'week', label: 'Last 7 Days' },
+        { value: 'month', label: 'Last 30 Days' },
+        { value: 'quarter', label: 'Last 3 Months' },
+        { value: 'half_year', label: 'Last 6 Months' }
+    ];
+
+    async function loadTopReferrers(filterValue) {
+        const data = await callRpc('get_top_referrers', { p_time_frame: filterValue, p_limit: 5 });
+        renderListWithProgress('referrersList', data, 'full_name', 'total_referrals', 5, 'tixraac');
+    }
+    async function loadTopSellers(filterValue) {
+        const data = await callRpc('get_top_sellers', { p_time_frame: filterValue, p_limit: 5 });
+        renderListWithProgress('sellersList', data, 'full_name', 'order_count', 5, 'dalab');
+    }
+    async function loadTopPromoted(filterValue) {
+        const data = await callRpc('get_top_promoted', { p_time_frame: filterValue, p_limit: 5 });
+        renderListWithProgress('promotedList', data, 'full_name', 'usage_count', 5, 'isticmaal');
+    }
+    async function loadTopDistricts(filterValue) {
+        const data = await callRpc('get_top_districts_filtered', { p_time_frame: filterValue, p_limit: 5 });
+        renderListWithProgress('districtsList', data, 'district', 'order_count', 5, 'dalab');
+    }
+    async function loadTopGroups(filterValue) {
+        const data = await callRpc('get_top_groups_filtered', { p_time_frame: filterValue, p_limit: 5 });
+        renderListWithProgress('groupsList', data, 'group_code', 'order_count', 5, 'dalab');
+    }
+    async function loadTopSchools(filterValue) {
+        const data = await callRpc('get_top_schools_filtered', { p_time_frame: filterValue, p_limit: 5 });
+        renderListWithProgress('schoolsList', data, 'school', 'order_count', 5, 'dalab');
+    }
+
+    function buildSimpleCard(title, icon, listId, loadFunction) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        let filterHtml = '<select class="filter-select" id="' + listId + 'TimeFilter">';
+        timeFilters.forEach(opt => { filterHtml += `<option value="${opt.value}">${opt.label}</option>`; });
+        filterHtml += '</select>';
+        card.innerHTML = `<div class="card-header"><h3>${icon} ${title}</h3><div class="filter-group">${filterHtml}</div></div><div class="card-body"><div id="${listId}List"></div></div>`;
+        const select = card.querySelector('.filter-select');
+        const load = () => loadFunction(select.value);
+        select.addEventListener('change', load);
+        load();
+        return card;
+    }
+
+    async function buildLeaderboard() {
+        const container = document.getElementById('leaderboardContainer');
+        container.innerHTML = '';
+        container.appendChild(buildSimpleCard('Top 5 Referrers (Tixraacyada)', '🏆', 'referrers', loadTopReferrers));
+        container.appendChild(buildSimpleCard('Top 5 Sellers (Iibiyeyaasha)', '💰', 'sellers', loadTopSellers));
+        container.appendChild(buildSimpleCard('Top 5 Promoted (Promo Codes)', '📢', 'promoted', loadTopPromoted));
+        container.appendChild(buildSimpleCard('Top 5 Districts (Degmooyinka)', '🏙️', 'districts', loadTopDistricts));
+        container.appendChild(buildSimpleCard('Top 5 Groups (Kooxaha)', '👥', 'groups', loadTopGroups));
+        container.appendChild(buildSimpleCard('Top 5 Schools (Iskuullada)', '🏫', 'schools', loadTopSchools));
+    }
+
+    buildLeaderboard();
+</script>
+</body>
+</html>

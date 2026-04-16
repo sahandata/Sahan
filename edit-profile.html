@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA - Edit Profile</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: linear-gradient(145deg, #3d9ce0 0%, #73c2f0 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
+        .container { max-width: 800px; width: 100%; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 2.5rem; color: white; margin-bottom: 0.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header p { font-size: 1rem; color: #ffd966; font-weight: 500; }
+        .nav-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 2rem; }
+        .nav-tabs a { background: white; color: #1e3c72; text-decoration: none; padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 600; transition: 0.2s; }
+        .nav-tabs a:hover { background: #ffd966; }
+        .card { background: white; border-radius: 1.5rem; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+        .card h2 { color: #b45f06; border-bottom: 2px solid #ffd966; padding-bottom: 0.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #5a3e1b; margin-bottom: 0.3rem; }
+        .input-group input, .input-group select { width: 100%; padding: 0.7rem 1rem; border-radius: 1.5rem; border: 1px solid #e0b354; background: #fffef7; font-size: 0.9rem; }
+        .input-group input:read-only, .input-group input:disabled { background: #f0e6d2; color: #6b5a3e; cursor: default; }
+        .btn-save { background: #e69500; color: white; border: none; border-radius: 2rem; padding: 0.7rem 1.5rem; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 0.5rem; }
+        .btn-save:hover { background: #cc7a00; }
+        .btn-cancel { background: #6c757d; color: white; border: none; border-radius: 2rem; padding: 0.7rem 1.5rem; font-weight: bold; cursor: pointer; width: 100%; margin-top: 0.5rem; }
+        .btn-cancel:hover { background: #5a6268; }
+        .message { margin-top: 1rem; padding: 0.5rem; border-radius: 1rem; font-size: 0.8rem; text-align: center; display: none; }
+        .footer { margin-top: 2rem; width: 100%; background: #ffd966; border-radius: 1rem; padding: 1.5rem 1rem 0.8rem; }
+        .footer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 1rem; }
+        .footer-section h4 { font-size: 0.9rem; margin-bottom: 0.5rem; color: #2c3e66; font-weight: 600; }
+        .footer-section ul { list-style: none; padding: 0; }
+        .footer-section li { margin-bottom: 0.3rem; }
+        .footer-section a { font-size: 0.75rem; color: #2c3e66; text-decoration: none; }
+        .footer-section a:hover { text-decoration: underline; }
+        .contact-links { display: flex; flex-direction: column; gap: 0.3rem; }
+        .contact-links a { font-size: 0.75rem; color: #2c3e66; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
+        .footer-bottom { text-align: center; padding-top: 1rem; font-size: 0.7rem; border-top: 1px solid rgba(44,62,102,0.2); margin-top: 1rem; }
+        @media (max-width: 700px) { .footer-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>⭐ SAHAN DATA ⭐</h1>
+        <p>Ku soo biir xidigaha suuq-geynta</p>
+    </div>
+
+    <div class="nav-tabs">
+        <a href="index.html">Home</a> <a href="login.html">Login</a> <a href="register.html">Register</a>
+        <a href="dashboard.html">Dashboard</a> <a href="admin.html">Admin</a> <a href="leaderboard.html">Leaderboard</a>
+        <a href="rewards.html">Rewards</a> <a href="buyer.html">Buy</a> <a href="edit-profile.html">Edit Profile</a>
+        <a href="order-history.html">Order History</a> <a href="referrals.html">Referrals</a>
+        <a href="notifications.html">Notifications</a> <a href="privacy.html">Privacy</a> <a href="terms.html">Terms</a>
+        <a href="faq.html">FAQ</a> <a href="policy.html">Policy</a>
+    </div>
+
+    <div class="card">
+        <h2><i class="fas fa-user-edit"></i> Edit Profile</h2>
+        <form id="editForm">
+            <div class="input-group">
+                <label>📛 Full Name (editable)</label>
+                <input type="text" id="fullName" placeholder="Your full name" required>
+            </div>
+            <div class="input-group">
+                <label>📞 Phone Number (editable)</label>
+                <input type="tel" id="phone" placeholder="612345678" required>
+            </div>
+            <div class="input-group">
+                <label>📧 Email (readonly)</label>
+                <input type="email" id="email" readonly>
+            </div>
+            <div class="input-group">
+                <label>🏘️ District (cannot change)</label>
+                <input type="text" id="district" readonly>
+            </div>
+            <div class="input-group">
+                <label>🏫 School (cannot change)</label>
+                <input type="text" id="school" readonly>
+            </div>
+            <div class="input-group">
+                <label>👥 Group Code (auto‑generated)</label>
+                <input type="text" id="groupCode" readonly>
+            </div>
+            <div class="input-group">
+                <label>🔗 Referral Code (auto‑generated)</label>
+                <input type="text" id="referralCode" readonly>
+            </div>
+            <div class="input-group">
+                <label>🏷️ Promo Code (auto‑generated)</label>
+                <input type="text" id="promoCode" readonly>
+            </div>
+            <div class="input-group">
+                <label>🎁 Bonus Points</label>
+                <input type="text" id="bonusPoints" readonly>
+            </div>
+            <button type="submit" class="btn-save">💾 Save Changes (Name & Phone)</button>
+            <button type="button" class="btn-cancel" onclick="window.location.href='dashboard.html'">Cancel</button>
+            <div id="formMessage" class="message"></div>
+        </form>
+    </div>
+
+    <div class="footer">
+        <div class="footer-grid">
+            <div class="footer-section">
+                <h4>Account</h4>
+                <ul><li><a href="login.html">Login</a></li><li><a href="register.html">Register</a></li><li><a href="edit-profile.html">Edit Profile</a></li></ul>
+            </div>
+            <div class="footer-section">
+                <h4>Info</h4>
+                <ul><li><a href="faq.html">FAQ</a></li><li><a href="terms.html">Terms</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="admin.html">Admin</a></li></ul>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul><li><a href="index.html">Home</a></li><li><a href="dashboard.html">Dashboard</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="rewards.html">Rewards</a></li></ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <div class="contact-links">
+                    <a href="https://wa.me/+252612538844" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp: +252 61 253 8844</a>
+                    <a href="tel:+252612538844"><i class="fas fa-phone-alt"></i> Tel: +252 61 253 8844</a>
+                    <a href="mailto:support@sahandata.com"><i class="fas fa-envelope"></i> support@sahandata.com</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2025 SAHAN DATA – All rights reserved</div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let currentCustomerId = null;
+
+    async function loadUserData() {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+            window.location.href = 'login.html';
+            return;
+        }
+        const { data: cust, error } = await sb.rpc('get_customer_by_uid', { p_uid: session.user.id });
+        if (error || !cust || cust.length === 0) {
+            document.getElementById('formMessage').innerHTML = 'Customer record not found. Please complete registration.';
+            document.getElementById('formMessage').style.display = 'block';
+            return;
+        }
+        const user = cust[0];
+        currentCustomerId = user.id;
+        document.getElementById('fullName').value = user.full_name || '';
+        document.getElementById('phone').value = user.phone_number || '';
+        document.getElementById('email').value = session.user.email || '';
+        document.getElementById('district').value = user.district || '';
+        document.getElementById('school').value = user.school || '';
+        document.getElementById('groupCode').value = user.group_code || '';
+        document.getElementById('referralCode').value = user.referral_code || '';
+        document.getElementById('promoCode').value = user.promo_code || '';
+        document.getElementById('bonusPoints').value = user.bonus_points || 0;
+    }
+
+    async function updateProfile(event) {
+        event.preventDefault();
+        const fullName = document.getElementById('fullName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        if (!fullName || !phone) {
+            showMessage('Full name and phone number are required.', true);
+            return;
+        }
+        if (!/^\d{7,9}$/.test(phone)) {
+            showMessage('Phone number must be 7-9 digits.', true);
+            return;
+        }
+        // Use RPC update_customer (only updates name and phone)
+        const { data, error } = await sb.rpc('update_customer', {
+            p_customer_id: currentCustomerId,
+            p_full_name: fullName,
+            p_phone_number: phone
+        });
+        if (error) {
+            showMessage('Error: ' + error.message, true);
+            return;
+        }
+        if (data && data.success === false) {
+            showMessage(data.message || 'Update failed.', true);
+            return;
+        }
+        showMessage('✅ Profile updated successfully! Redirecting...', false);
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 2000);
+    }
+
+    function showMessage(msg, isError) {
+        const msgDiv = document.getElementById('formMessage');
+        msgDiv.style.display = 'block';
+        msgDiv.style.backgroundColor = isError ? '#fee2e2' : '#d4edda';
+        msgDiv.style.color = isError ? '#b91c1c' : '#155724';
+        msgDiv.innerHTML = isError ? `❌ ${msg}` : `✅ ${msg}`;
+        setTimeout(() => {
+            msgDiv.style.display = 'none';
+        }, 4000);
+    }
+
+    document.getElementById('editForm').addEventListener('submit', updateProfile);
+    loadUserData();
+</script>
+</body>
+</html>
