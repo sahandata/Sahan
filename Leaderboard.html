@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAHAN DATA · Leaderboard (Live)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { background: linear-gradient(145deg, #3d9ce0 0%, #73c2f0 100%); min-height: 100vh; padding: 2rem 1rem; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .title-section { text-align: center; margin-bottom: 1.5rem; }
+        .title-section h1 { font-size: 2.5rem; color: white; }
+        .title-section p { color: #ffd966; }
+        .nav-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 2rem; }
+        .nav-tabs a { background: white; color: #1e3c72; text-decoration: none; padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 600; transition: 0.2s; }
+        .nav-tabs a:hover { background: #ffd966; }
+        .stats-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; background: rgba(0,0,0,0.2); padding: 0.5rem 1rem; border-radius: 3rem; backdrop-filter: blur(4px); }
+        .stat-chip { background: white; border-radius: 2rem; padding: 0.3rem 1rem 0.3rem 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); font-size: 0.75rem; font-weight: 600; color: #1e3c72; }
+        .stat-chip i { font-size: 0.9rem; color: #f59e0b; }
+        .stat-chip .stat-num { background: #ffd966; padding: 0.1rem 0.5rem; border-radius: 1rem; margin-left: 0.2rem; font-weight: 700; }
+        .leaderboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: white; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .card-header { background: #ffd966; padding: 0.8rem 1.2rem; }
+        .card-header h3 { color: #2c3e66; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; margin: 0; }
+        .card-body { padding: 1rem; max-height: 400px; overflow-y: auto; }
+        .leader-item { display: block; margin-bottom: 0.8rem; }
+        .leader-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
+        .rank { font-weight: bold; width: 40px; }
+        .name { flex: 1; color: #1e3c72; font-weight: 500; }
+        .count { background: #fff3e0; padding: 0.2rem 0.7rem; border-radius: 1.2rem; font-size: 0.75rem; font-weight: bold; color: #f59e0b; }
+        .progress-bar-container { background: #e9ecef; border-radius: 1rem; height: 6px; width: 100%; margin-top: 0.2rem; overflow: hidden; }
+        .progress-bar-fill { background: #f59e0b; height: 6px; width: 0%; border-radius: 1rem; transition: width 0.3s; }
+        .trophy { font-size: 1.2rem; margin-right: 0.3rem; }
+        .loading { text-align: center; padding: 2rem; color: #718096; }
+        .footer { margin-top: 2rem; background: #ffd966; border-radius: 1rem; padding: 1.5rem 1rem 0.8rem; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; }
+        .footer-bottom { text-align: center; font-size: 0.7rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(44,62,102,0.2); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="title-section">
+        <h1>⭐SAHANDATA⭐</h1>
+        <p>Live Leaderboard · Hogaamiyayaasha Socda</p>
+    </div>
+    
+    <div class="nav-tabs">
+        <a href="index.html">Home</a> <a href="login.html">Login</a> <a href="register.html">Register</a>
+        <a href="dashboard.html">Dashboard</a> <a href="leaderboard.html">Leaderboard</a> <a href="rewards.html">Rewards</a>
+        <a href="buyer.html">Buy</a> <a href="order-history.html">Orders</a> <a href="referrals.html">Referrals</a>
+        <a href="privacy.html">Privacy</a> <a href="admin.html">Admin</a>
+    </div>
+
+    <div class="stats-row" id="statsRow">
+        <div class="stat-chip"><i class="fas fa-users"></i> Users <span class="stat-num" id="statUsers">-</span></div>
+        <div class="stat-chip"><i class="fas fa-box"></i> Orders <span class="stat-num" id="statOrders">-</span></div>
+        <div class="stat-chip"><i class="fas fa-arrows-spin"></i> Trans. <span class="stat-num" id="statTransactions">-</span></div>
+        <div class="stat-chip"><i class="fas fa-link"></i> Referrals <span class="stat-num" id="statReferrals">-</span></div>
+        <div class="stat-chip"><i class="fas fa-location-dot"></i> Districts <span class="stat-num" id="statDistricts">-</span></div>
+        <div class="stat-chip"><i class="fas fa-layer-group"></i> Groups <span class="stat-num" id="statGroups">-</span></div>
+        <div class="stat-chip"><i class="fas fa-school"></i> Schools <span class="stat-num" id="statSchools">-</span></div>
+        <div class="stat-chip"><i class="fas fa-star"></i> Bonus <span class="stat-num" id="statBonus">-</span></div>
+    </div>
+
+    <div id="leaderboardContainer" class="leaderboard-grid"></div>
+
+    <div class="footer">
+        <div class="footer-grid"><div><h4>SAHAN DATA</h4><p style="font-size:0.75rem;">Suuq-geynta casriga ah</p></div></div>
+        <div class="footer-bottom">© 2026 SAHAN DATA. All rights reserved.</div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        "use strict";
+
+        const SUPABASE_URL = 'https://xccbmivhcbukqyplstae.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JtaXZoY2J1a3F5cGxzdGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyNTIsImV4cCI6MjA4NjkzMzI1Mn0.lGr3cDItP1-LVJgzd5wW5gp0HsGUonuZj-T9qGL2nF0';
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function callRpc(func) {
+            try { 
+                const { data, error } = await sb.rpc(func); 
+                if (error) throw error; 
+                return data; 
+            } catch (e) { 
+                console.warn(`RPC ${func} failed:`, e.message); 
+                return null; 
+            }
+        }
+
+        async function loadStatistics() {
+            const results = await Promise.all([
+                callRpc('get_total_users'), callRpc('get_total_orders'), callRpc('get_total_transactions'),
+                callRpc('get_total_referrals_sum'), callRpc('get_total_districts'), callRpc('get_total_groups'),
+                callRpc('get_total_schools'), callRpc('get_total_bonus_points')
+            ]);
+            const ids = ['statUsers','statOrders','statTransactions','statReferrals','statDistricts','statGroups','statSchools','statBonus'];
+            ids.forEach((id, i) => { document.getElementById(id).textContent = results[i] ?? '?'; });
+        }
+
+        function escapeHtml(s) { return s ? String(s).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;') : ''; }
+
+        function renderList(containerId, items, nameKey, countKey, limit, label) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            if (!items || !items.length) {
+                container.innerHTML = '<div class="loading">Weli ma jiraan</div>';
+                return;
+            }
+            const top = items.slice(0, limit);
+            const max = Math.max(...top.map(i => i[countKey] || 0), 1);
+            container.innerHTML = '';
+            top.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'leader-item';
+                const name = escapeHtml(item[nameKey] || '—');
+                const count = item[countKey] || 0;
+                const percent = (count / max) * 100;
+                div.innerHTML = `
+                    <div class="leader-row">
+                        <div class="rank">${idx+1}</div>
+                        <div class="name">${idx===0 ? '<span class="trophy">🥇</span> ' : ''}${name}</div>
+                        <div class="count">${count} ${label}</div>
+                    </div>
+                    <div class="progress-bar-container"><div class="progress-bar-fill" style="width:${percent}%;"></div></div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function buildLeaderboard() {
+            const grid = document.getElementById('leaderboardContainer');
+            grid.innerHTML = '<div class="loading">Loading live data...</div>';
+            try {
+                const [weekly, sellers, promoted, districts, groups, schools] = await Promise.all([
+                    callRpc('get_weekly_top_referrers'), callRpc('get_monthly_top_sellers'), callRpc('get_monthly_top_promoted'),
+                    callRpc('get_top_districts'), callRpc('get_top_groups'), callRpc('get_top_schools')
+                ]);
+                grid.innerHTML = '';
+
+                // Helper to create card
+                function createCard(title, listId) {
+                    const card = document.createElement('div'); card.className = 'card';
+                    card.innerHTML = `<div class="card-header"><h3>${title}</h3></div><div class="card-body"><div id="${listId}"></div></div>`;
+                    return card;
+                }
+
+                grid.appendChild(createCard('📅 Todobaadkan · Soo Jiidashada', 'weeklyList'));
+                grid.appendChild(createCard('🛒 Bishan · Iibiyeyaasha', 'sellersList'));
+                grid.appendChild(createCard('📢 Bishan · Promo La Isticmaalay', 'promotedList'));
+                grid.appendChild(createCard('📍 Sannadkan · Degmooyinka', 'districtList'));
+                grid.appendChild(createCard('👥 Sannadkan · Kooxaha', 'groupList'));
+                grid.appendChild(createCard('🏫 Sannadkan · Iskuullada', 'schoolList'));
+
+                renderList('weeklyList', weekly, 'full_name', 'weekly_referrals', 3, 'tixraac');
+                renderList('sellersList', sellers, 'full_name', 'total_orders', 5, 'dalab');
+                renderList('promotedList', promoted, 'full_name', 'promo_uses', 5, 'isticmaal');
+                renderList('districtList', districts, 'district', 'total_orders', 5, 'dalab');
+                renderList('groupList', groups, 'group_code', 'total_orders', 5, 'dalab');
+                renderList('schoolList', schools, 'school', 'total_orders', 5, 'dalab');
+            } catch (e) {
+                grid.innerHTML = '<div class="loading">Error loading data. Please refresh.</div>';
+                console.error(e);
+            }
+        }
+
+        // Initialize
+        loadStatistics();
+        buildLeaderboard();
+    })();
+</script>
+</body>
+</html>
