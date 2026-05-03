@@ -43,7 +43,7 @@
 <div class="container">
     <div class="title-section">
         <h1>⭐SAHANDATA⭐</h1>
-        <p>Live Leaderboard · Hogaamiyayaasha Socda</p>
+        <p>Live scores & rangs · kala horeynta tartamada</p>
     </div>
     
     <div class="nav-tabs">
@@ -148,12 +148,12 @@
                     return card;
                 }
 
-                grid.appendChild(createCard('📅 Todobaadkan · Soo Jiidashada', 'weeklyList'));
-                grid.appendChild(createCard('🛒 Bishan · Iibiyeyaasha', 'sellersList'));
-                grid.appendChild(createCard('📢 Bishan · Promo La Isticmaalay', 'promotedList'));
-                grid.appendChild(createCard('📍 Sannadkan · Degmooyinka', 'districtList'));
-                grid.appendChild(createCard('👥 Sannadkan · Kooxaha', 'groupList'));
-                grid.appendChild(createCard('🏫 Sannadkan · Iskuullada', 'schoolList'));
+                grid.appendChild(createCard('📅 tartanka soo jiidista (most referrals) ' , 'weeklyList'));
+                grid.appendChild(createCard('🛒 tartanka iibka · (most sellers)', 'sellersList'));
+                grid.appendChild(createCard('📢 tartnka kor u qaadista · (Promo code) ', 'promotedList'));
+                grid.appendChild(createCard('📍 degmada · ugu iibka badan', 'districtList'));
+                grid.appendChild(createCard('👥 kooxda · ugu iibka badan', 'groupList'));
+                grid.appendChild(createCard('🏫 iskuulka · ugu iibka badan', 'schoolList'));
 
                 renderList('weeklyList', weekly, 'full_name', 'weekly_referrals', 3, 'tixraac');
                 renderList('sellersList', sellers, 'full_name', 'total_orders', 5, 'dalab');
